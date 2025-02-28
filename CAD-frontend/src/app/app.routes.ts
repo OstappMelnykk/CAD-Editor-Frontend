@@ -22,11 +22,16 @@ export const routes: Routes = [
   {
     path: 'profile',
     loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule),
-    canActivate: [authGuard], // Доступ лише для авторизованих
+    canActivate: [authGuard],
+  },
+  {
+    path: 'editor',
+    loadChildren: () => import('./features/editor/editor.module').then(m => m.EditorModule),
+    canActivate: [authGuard],
   },
   {
     path: '**',
-    redirectTo: 'home', // Резервний маршрут
+    redirectTo: 'home',
   },
 
 ];
