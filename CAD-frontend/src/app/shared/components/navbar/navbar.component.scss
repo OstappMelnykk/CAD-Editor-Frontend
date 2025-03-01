@@ -1,0 +1,37 @@
+.navbar{
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    &__logo{
+        height: 100%;
+        align-content: center;
+        font-weight: 400;
+        font-size: 25px;
+        white-space: nowrap;
+    }
+    &__navigation{
+        height: 100%;
+    }
+    &__menu{
+        height: 100%;
+        display: flex;
+    }
+    &__menu-item{
+
+    }
+    &__menu-link{
+        display: flex;
+        align-items: center;
+        height: 100%;
+        font-weight: 400;
+        font-size: 17px;
+
+        padding: 0 calc(var(--row1-const) / 2);
+
+        &:hover {
+            background-color: #404a56;
+        }
+    }
+}
