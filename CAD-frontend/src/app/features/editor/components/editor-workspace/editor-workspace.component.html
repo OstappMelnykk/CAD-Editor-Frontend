@@ -1,1 +1,20 @@
-<p>editor-workspace works!</p>
+<div class="editor-workspace">
+    <div class="editor-workspace__toolbar">
+        <ul class="editor-workspace__toolbar-icons">
+
+            @for (btn of buttons; track btn.id) {
+                <li class="editor-workspace__toolbar-item">
+                    <!--<app-settings-icon
+                        [buttonId]="btn.id"
+                        [buttonTitle]="btn.title"
+                        [backgroundImg]="btn.backgroundImg">
+                    </app-settings-icon>-->
+                </li>
+            }
+        </ul>
+    </div>
+
+    <div class="editor-workspace__settings-panel"></div>
+    <div class="editor-workspace__canvas"></div>
+
+</div>
