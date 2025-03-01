@@ -1,12 +1,9 @@
 import { Component } from '@angular/core';
 import {WindowResizeService} from '../../../../core/services/ui/window-resize.service';
-import {NgClass} from '@angular/common';
 
 @Component({
   selector: 'app-editor-workspace',
-    imports: [
-
-    ],
+    imports: [],
   templateUrl: './editor-workspace.component.html',
   styleUrl: './editor-workspace.component.scss'
 })
