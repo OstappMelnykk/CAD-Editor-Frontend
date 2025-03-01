@@ -1,0 +1,43 @@
+.app-layout{
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--row1) var(--row2) var(--row3);
+    grid-template-areas:
+    "header"
+    "main"
+    "footer";
+
+    &__header {
+        grid-area: header;
+        background: #212830;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        // r1 * 2
+        padding-left: calc(var(--row1-const) * 2);
+        // r1 * 2  -  r1 / 2
+        padding-right: calc(var(--row1-const) * 2 - (var(--row1-const) / 2));
+
+    }
+    &__main {
+        grid-area: main;
+    }
+
+    &__footer {
+        grid-area: footer;
+        background: #1a1f25;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        padding: 0 calc(var(--row1-const) / 2);
+    }
+}
+
+app-navbar{
+    width: 100%;
+    height: 100%;
+}
