@@ -53,6 +53,12 @@ export const routes: Routes = [
                 component: EditorWorkspaceComponent,
                 children: [
                     {
+                        path: '',
+                        redirectTo: 'design',
+                        pathMatch: 'full',
+
+                    },
+                    {
                         path: 'design',
                         component: DesignComponent,
                     },
@@ -73,12 +79,8 @@ export const routes: Routes = [
             }
         ]
     },
-
-    /*
-      {
+    {
         path: '**',
         redirectTo: 'home',
-      },
-    */
-
+    },
 ];

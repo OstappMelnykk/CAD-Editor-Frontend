@@ -27,7 +27,12 @@
         </ul>
 
         <button
-            class="editor-workspace__button ssss"
+            class="editor-workspace__button editor-workspace__settings--button"
+            [ngClass]="{
+                            'editor-workspace__button--active': currentMenuIcon === 4 && !isSettingsPanelHidden,
+                            'editor-workspace__button--hover-enabled': currentMenuIcon !== 4
+                          }"
+            (click)="onIconButtonClick(4)"
             title="advanced-settings"
             [routerLink]="['../editor-advanced-settings']">
 

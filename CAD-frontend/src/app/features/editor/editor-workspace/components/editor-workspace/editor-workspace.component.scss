@@ -12,7 +12,10 @@
     &__toolbar {
         background: #2E3440;
         grid-area: icons;
-
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        //padding: calc(var(--row1) * 0.25);
 
 
     }
@@ -53,6 +56,13 @@
         }
     }
 
+    &__settings--button{
+        width: var(--col1);
+        height: var(--col1);
+        margin-bottom: calc(var(--row1) * 0.25);
+    }
+
+
     &__icon-img {
         width: calc(var(--col1) * 0.5);
         height: calc(var(--col1) * 0.5);
@@ -75,8 +85,4 @@
         background: #212830;
         grid-area: canvas;
     }
-}
-
-.ssss{
-    all: unset;
 }
