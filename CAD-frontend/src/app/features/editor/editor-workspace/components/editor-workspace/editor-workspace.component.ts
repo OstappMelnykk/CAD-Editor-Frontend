@@ -20,6 +20,7 @@ export class EditorWorkspaceComponent {
     isSettingsPanelHidden: boolean = false;
 
     currentMenuIcon: number = 1;
+    settingsPath: string = '../../../../../../../assets/icons/settings/Settings.png';
 
     constructor(private windowResizeService: WindowResizeService) {
         this.isSettingsPanelHidden = this.windowResizeService.isSettingsPanelHidden;

@@ -4,20 +4,6 @@
 
             @for (tool of buttons; track tool.id) {
                 <li class="editor-workspace__toolbar-item">
-                    <!--<a [routerLink]="btn.title.toLowerCase()">
-
-                    </a>
-                    <button
-                        [ngClass]="{
-                            'btn-active': currentIconButton === btn.id ,
-                            'hover-enabled': currentIconButton !== btn.id
-                          }"
-                        (click)="onIconButtonClick(btn.id)"
-
-                        [title]="btn.title">
-                        <div class="icon-img" [ngStyle]="{ 'background-image': 'url(' + btn.backgroundImg + ')' }"></div>
-                    </button>-->
-
                     <button
                         class="editor-workspace__button"
                         [ngClass]="{
@@ -39,6 +25,18 @@
                 </li>
             }
         </ul>
+
+        <button
+            class="editor-workspace__button ssss"
+            title="advanced-settings"
+            [routerLink]="['../editor-advanced-settings']">
+
+
+            <div
+                class="editor-workspace__icon-img"
+                [ngStyle]="{ 'background-image': 'url(' + settingsPath + ')' }">
+            </div>
+        </button>
     </div>
 
     <div class="editor-workspace__settings-panel">
@@ -49,18 +47,3 @@
     </div>
 
 </div>
-
-
-
-
-
-
-
-<!--<a routerLink="design">design</a>
-<br>
-<a routerLink="division">division</a>
-<br>
-<a routerLink="view">view</a>
-<br>
-<router-outlet></router-outlet>-->
-
