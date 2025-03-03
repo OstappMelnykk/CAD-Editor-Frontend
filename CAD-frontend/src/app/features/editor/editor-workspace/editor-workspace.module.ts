@@ -1,14 +1,14 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { EditorRoutingModule } from './editor-routing.module';
+import { EditorWorkspaceRoutingModule } from './editor-workspace-routing.module';
 
 
 @NgModule({
   declarations: [],
   imports: [
     CommonModule,
-    EditorRoutingModule
+    EditorWorkspaceRoutingModule
   ]
 })
-export class EditorModule { }
+export class EditorWorkspaceModule { }

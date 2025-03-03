@@ -1,0 +1,14 @@
+import { Component } from '@angular/core';
+import {RouterLink, RouterOutlet} from '@angular/router';
+
+@Component({
+  selector: 'app-editor',
+    imports: [
+        RouterOutlet,
+    ],
+  templateUrl: './editor.component.html',
+  styleUrl: './editor.component.scss'
+})
+export class EditorComponent {
+
+}

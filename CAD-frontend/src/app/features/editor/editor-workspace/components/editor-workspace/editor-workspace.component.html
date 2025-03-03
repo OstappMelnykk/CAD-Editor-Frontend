@@ -1,0 +1,66 @@
+<div class="editor-workspace">
+    <div class="editor-workspace__toolbar">
+        <ul class="editor-workspace__toolbar-icons">
+
+            @for (tool of buttons; track tool.id) {
+                <li class="editor-workspace__toolbar-item">
+                    <!--<a [routerLink]="btn.title.toLowerCase()">
+
+                    </a>
+                    <button
+                        [ngClass]="{
+                            'btn-active': currentIconButton === btn.id ,
+                            'hover-enabled': currentIconButton !== btn.id
+                          }"
+                        (click)="onIconButtonClick(btn.id)"
+
+                        [title]="btn.title">
+                        <div class="icon-img" [ngStyle]="{ 'background-image': 'url(' + btn.backgroundImg + ')' }"></div>
+                    </button>-->
+
+                    <button
+                        class="editor-workspace__button"
+                        [ngClass]="{
+                            'editor-workspace__button--active': currentMenuIcon === tool.id && !isSettingsPanelHidden,
+                            'editor-workspace__button--hover-enabled': currentMenuIcon !== tool.id
+                          }"
+                        (click)="onIconButtonClick(tool.id)"
+                        [title]="tool.title"
+                        [routerLink]="tool.title.toLowerCase()">
+
+                        <div
+                            class="editor-workspace__icon-img"
+                            [ngStyle]="{ 'background-image': 'url(' + tool.backgroundImg + ')' }">
+                        </div>
+                    </button>
+
+
+
+                </li>
+            }
+        </ul>
+    </div>
+
+    <div class="editor-workspace__settings-panel">
+        <router-outlet></router-outlet>
+    </div>
+    <div class="editor-workspace__canvas">
+        <app-canvas></app-canvas>
+    </div>
+
+</div>
+
+
+
+
+
+
+
+<!--<a routerLink="design">design</a>
+<br>
+<a routerLink="division">division</a>
+<br>
+<a routerLink="view">view</a>
+<br>
+<router-outlet></router-outlet>-->
+
