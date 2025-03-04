@@ -1,5 +1,10 @@
-import {Component} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
+import {IDivisionRequest} from '../../../../../../core/models/DTOs/IDivisionRequest.interface';
+import {ApiService} from '../../../../../../core/services/api/api.service';
+import {forkJoin} from 'rxjs';
+import {IAPIData} from '../../../../../../core/interfaces/api/IAPIData.interface';
+import {DivisionEventService} from '../../../../../../core/services/state/division-event.service';
 
 @Component({
     selector: 'app-division',
@@ -14,12 +19,9 @@ import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 export class DivisionComponent {
     title: string = 'Division';
 
-    /*  divisionService = inject(DivisionService);
-    divisionHandlerService = inject(DivisionHandlerService);*/
-
-    /*  private points: IPoint[] = []
-      private pairsOfIndices: IPairOfIndices[] = []
-      private polygons: IPolygon[] = []*/
+    constructor(private apiService: ApiService,
+                private divisionEvent: DivisionEventService)
+    {}
 
     public myForm = new FormGroup({
         x: new FormControl(),
@@ -57,25 +59,28 @@ export class DivisionComponent {
 
         if(!IsValid) alert("form is not valied. use default values")
 
-        /*this.divisionService.divide(
-            this.myForm.value.x ?? 1,
-            this.myForm.value.y ?? 1,
-            this.myForm.value.z ?? 1).subscribe({
-            next: ({ points, pairsOfIndices, polygons }) => {
-                console.log('Points:', points);
-                console.log('Pairs of Indices:', pairsOfIndices);
-                console.log('Polygons:', polygons);
 
-                this.divisionHandlerService.DivisionOccurs({
-                    points: points,
-                    pairsOfIndices: pairsOfIndices,
-                    polygons: polygons
+        let divisionRequest: IDivisionRequest = {
+             x: this.myForm.value.x,
+             y: this.myForm.value.y,
+             z: this.myForm.value.z,
+        }
+
+        this.apiService.Divide(divisionRequest).subscribe({
+            next: () => {
+                forkJoin({
+                    points: this.apiService.Points(),
+                    pairsOfIndices: this.apiService.PairsOfIndices(),
+                    polygons: this.apiService.Polygons()
+                }).subscribe((apiData: IAPIData) => {
+                    console.log('Дані зібрані з усіх запитів:', apiData);
+
+                    this.divisionEvent.DivisionOccurs(apiData);
                 });
-
             },
-            error: (error) => {
-                console.error('Error:', error);
+            error: (err) => {
+                console.error('Помилка під час виконання Divide:', err);
             }
-        });*/
+        });
     }
 }

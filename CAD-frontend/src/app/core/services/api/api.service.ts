@@ -20,19 +20,19 @@ export class ApiService {
 
     constructor(private http: HttpClient) {}
 
-    postDevide(requestBody: IDivisionRequest): Observable<IDivisionResponse> {
+    Divide(requestBody: IDivisionRequest): Observable<IDivisionResponse> {
         return this.http.post<IDivisionResponse>(this.apiUrl + '/Devide', requestBody);
     }
 
-    getPoints(): Observable<IPoint[]>{
+    Points(): Observable<IPoint[]>{
         return this.http.get<IPoint[]>(this.apiUrl + '/GetPoints')
     }
 
-    getPairsOfIndices(): Observable<IPairOfIndices[]>{
+    PairsOfIndices(): Observable<IPairOfIndices[]>{
         return this.http.get<IPairOfIndices[]>(this.apiUrl + '/GetPairsOfIndices')
     }
 
-    getPolygons(): Observable<IPolygon[]>{
+    Polygons(): Observable<IPolygon[]>{
         return this.http.get<IPolygon[]>(this.apiUrl + '/GetPolygons')
     }
 }
