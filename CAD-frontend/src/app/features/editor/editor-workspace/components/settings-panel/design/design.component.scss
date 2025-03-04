@@ -1,3 +1,24 @@
-p{
-    background: blue;
+.settings {
+
+    display: grid;
+    grid-gap: 1em;
+    overflow: auto;
+
+    &__header {
+        font-weight: 500;
+        font-size: 17px;
+    }
+
+    &__divider {
+
+        hr {
+            all: unset;
+            display: block;
+            height: 1px;
+            background-color: #475261;
+            border: none;
+            width: 100%;
+            margin: 0px;
+        }
+    }
 }

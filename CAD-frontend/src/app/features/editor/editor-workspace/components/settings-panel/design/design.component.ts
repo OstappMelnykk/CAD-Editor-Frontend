@@ -1,11 +1,13 @@
-import { Component } from '@angular/core';
+import {Component} from '@angular/core';
 
 @Component({
-  selector: 'app-design',
-  imports: [],
-  templateUrl: './design.component.html',
-  styleUrl: './design.component.scss'
+    selector: 'app-design',
+    standalone: true,
+
+    imports: [],
+    templateUrl: './design.component.html',
+    styleUrl: './design.component.scss'
 })
 export class DesignComponent {
-
+    title: string = 'Design';
 }
