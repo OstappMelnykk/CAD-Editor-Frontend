@@ -1,1 +1,43 @@
-<p>division works!</p>
+<div class="settings">
+
+    <div class="settings__header"> {{ title }} </div>
+
+    <div class="settings__divider">
+        <hr>
+    </div>
+
+    <form [formGroup]="myForm" class="form">
+        <label class="form__label form__label--x" for="x">X:</label>
+        <input
+            type="number"
+            placeholder="Enter X value"
+            id="x"
+            class="form__input form__input--x"
+            formControlName="x">
+
+        <label class="form__label form__label--y" for="y">Y:</label>
+        <input
+            type="number"
+            placeholder="Enter Y value"
+            id="y"
+            class="form__input form__input--y"
+            formControlName="y">
+
+        <label class="form__label form__label--z" for="z">Z:</label>
+        <input
+            type="number"
+            placeholder="Enter Z value"
+            id="z"
+            class="form__input form__input--z"
+            formControlName="z">
+
+        <button (click)="setDefaulForm()" class="form__button form__button--default">Default</button>
+        <button (click)="handleValue()" class="form__button form__button--execute">Execute</button>
+    </form>
+
+
+
+    <div class="settings__divider">
+        <hr>
+    </div>
+</div>

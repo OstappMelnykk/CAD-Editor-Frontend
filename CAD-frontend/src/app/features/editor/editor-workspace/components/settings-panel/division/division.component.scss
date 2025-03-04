@@ -1,3 +1,157 @@
-p{
-    background: blue;
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+
+.settings {
+
+    display: grid;
+    grid-gap: 1em;
+    overflow: auto;
+
+    &__header {
+        font-weight: 500;
+        font-size: 17px;
+    }
+
+    &__divider {
+
+        hr {
+            all: unset;
+            display: block;
+            height: 1px;
+            background-color: #475261;
+            border: none;
+            width: 100%;
+            margin: 0px;
+        }
+    }
+}
+
+
+
+
+
+input[type="color"] {
+    border: 2px solid #333;
+    padding: 5px;
+    border-radius: 5px;
+    background-color: #fff;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+}
+
+input[type="color"]:focus {
+    border-color: #007BFF;
+}
+
+.form {
+    display: grid;
+    grid-template-columns: 50% 50%;
+    grid-template-rows: repeat(3, 1.3em) 1.7em 1.7em;
+    grid-template-areas:
+        'lable-x input-x'
+        'lable-y input-y'
+        'lable-z input-z'
+        'none defaultVals'
+        'none button';
+    grid-gap: 1em 0px;
+    overflow: auto;
+
+    &__label {
+
+        &--x {
+            grid-area: lable-x;
+        }
+        &--y {
+            grid-area: lable-y;
+        }
+        &--z {
+            grid-area: lable-z;
+        }
+    }
+
+    &__input {
+        all: unset;
+        border: none;
+        border-bottom: 2px solid #545F71;
+        outline: none;
+        padding: 2px 0;
+        width: 100%;
+        transition: border-color 0.4s ease-in-out, transform 0.4s ease-in-out;
+
+        &::placeholder {
+            color: #768294;
+            opacity: 1;
+            font-weight: 100;
+            font-size: 15px;
+            transition: opacity 1.4s ease-in-out;
+        }
+
+        &:focus {
+            border-color: transparent;
+            transition: border-color 0.4s ease-in-out, transform 0.4s ease-in-out;
+        }
+
+
+        &:focus::placeholder {
+            opacity: 0;
+        }
+        &:not(:focus)::placeholder {
+            opacity: 1;
+        }
+
+
+
+
+
+        &--x {
+            grid-area: input-x;
+        }
+        &--y {
+            grid-area: input-y;
+        }
+        &--z {
+            grid-area: input-z;
+        }
+    }
+
+    &__button {
+        border-radius: 0.2em;
+        background-color: transparent;
+        transition: background-color 0.3s ease-in-out, transform 0.3s ease-in-out;
+        border: 0.1em solid #2E3440;
+
+        &:hover {
+            background-color: #2E3440;
+            transition: background-color 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+
+        &--default {
+            grid-area: defaultVals;
+
+            &:hover {
+
+            }
+        }
+
+        &--execute {
+            grid-area: button;
+
+            &:hover {
+
+            }
+        }
+
+
+
+    }
+}
+
