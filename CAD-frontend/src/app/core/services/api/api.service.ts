@@ -35,4 +35,8 @@ export class ApiService {
     Polygons(): Observable<IPolygon[]>{
         return this.http.get<IPolygon[]>(this.apiUrl + '/GetPolygons')
     }
+
+    Default_20_Points(){
+        return this.http.get<IPoint[]>(this.apiUrl + '/Get_20_DefaultSimplePoints')
+    }
 }
