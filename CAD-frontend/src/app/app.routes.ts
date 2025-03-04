@@ -54,17 +54,17 @@ export const routes: Routes = [
                 children: [
                     {
                         path: '',
-                        redirectTo: 'design',
+                        redirectTo: 'division',
                         pathMatch: 'full',
 
                     },
                     {
-                        path: 'design',
-                        component: DesignComponent,
-                    },
-                    {
                         path: 'division',
                         component: DivisionComponent,
+                    },
+                    {
+                        path: 'design',
+                        component: DesignComponent,
                     },
                     {
                         path: 'view',

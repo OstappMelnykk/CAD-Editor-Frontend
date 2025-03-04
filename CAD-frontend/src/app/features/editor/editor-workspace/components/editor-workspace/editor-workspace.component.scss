@@ -15,9 +15,6 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        //padding: calc(var(--row1) * 0.25);
-
-
     }
 
     &__toolbar-icons {
@@ -56,7 +53,7 @@
         }
     }
 
-    &__settings--button{
+    &__settings-button{
         width: var(--col1);
         height: var(--col1);
         margin-bottom: calc(var(--row1) * 0.25);

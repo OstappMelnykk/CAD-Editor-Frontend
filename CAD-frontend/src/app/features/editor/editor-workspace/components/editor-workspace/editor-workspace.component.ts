@@ -20,17 +20,18 @@ export class EditorWorkspaceComponent {
     isSettingsPanelHidden: boolean = false;
 
     currentMenuIcon: number = 1;
+
+    settingTool = { id: 4, title: 'Advanced-Settings', backgroundImg: '../../../../../../../assets/icons/settings/Settings.png' };
     settingsPath: string = '../../../../../../../assets/icons/settings/Settings.png';
 
     constructor(private windowResizeService: WindowResizeService) {
         this.isSettingsPanelHidden = this.windowResizeService.isSettingsPanelHidden;
     }
 
-    buttons = [
+    tools = [
         { id: 1, title: 'Division', backgroundImg: '../../../../../../../assets/icons/division-feature/CubeDivision.png' },
         { id: 2, title: 'Design', backgroundImg: '../../../../../../../assets/icons/design/Brush.png' },
         { id: 3, title: 'View', backgroundImg: '../../../../../../../assets/icons/view/View.png' },
-        //{ id: 4, title: 'Settings', backgroundImg: '.' },
     ];
 
 

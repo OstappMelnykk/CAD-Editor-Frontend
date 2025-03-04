@@ -2,7 +2,7 @@
     <div class="editor-workspace__toolbar">
         <ul class="editor-workspace__toolbar-icons">
 
-            @for (tool of buttons; track tool.id) {
+            @for (tool of tools; track tool.id) {
                 <li class="editor-workspace__toolbar-item">
                     <button
                         class="editor-workspace__button"
@@ -19,23 +19,19 @@
                             [ngStyle]="{ 'background-image': 'url(' + tool.backgroundImg + ')' }">
                         </div>
                     </button>
-
-
-
                 </li>
             }
         </ul>
 
         <button
-            class="editor-workspace__button editor-workspace__settings--button"
+            class="editor-workspace__button editor-workspace__settings-button"
             [ngClass]="{
-                            'editor-workspace__button--active': currentMenuIcon === 4 && !isSettingsPanelHidden,
-                            'editor-workspace__button--hover-enabled': currentMenuIcon !== 4
+                            'editor-workspace__button--active': currentMenuIcon === settingTool.id && !isSettingsPanelHidden,
+                            'editor-workspace__button--hover-enabled': currentMenuIcon !== settingTool.id
                           }"
-            (click)="onIconButtonClick(4)"
-            title="advanced-settings"
+            (click)="onIconButtonClick(settingTool.id)"
+            [title]="settingTool.title"
             [routerLink]="['../editor-advanced-settings']">
-
 
             <div
                 class="editor-workspace__icon-img"
