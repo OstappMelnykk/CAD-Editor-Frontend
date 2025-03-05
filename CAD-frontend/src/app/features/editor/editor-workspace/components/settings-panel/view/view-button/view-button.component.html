@@ -1,7 +1,7 @@
 <button
     [ngClass]="{
-    'btn-active': currentViewPositionButton === buttonNumber,
-    'hover-enabled': currentViewPositionButton !== buttonNumber
+    'btn-active': currentViewButton === buttonNumber,
+    'hover-enabled': currentViewButton !== buttonNumber
   }"
     (click)="onButtonClick(buttonNumber)"
 >

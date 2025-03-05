@@ -1,34 +1,38 @@
-import {Component, inject, Input} from '@angular/core';
+import {Component, Input} from '@angular/core';
 import {NgClass} from '@angular/common';
+import {ICameraPosition} from '../../../../../../../core/interfaces/three-js/ICameraPosition.interface';
+import {CameraEventService} from '../../../../../../../core/services/state/camera-event.service';
+import {ViewButtonEventService} from '../../../../../../../core/services/state/view-button-event.service';
 
 @Component({
-  selector: 'app-view-button',
+    selector: 'app-view-button',
     imports: [
         NgClass
     ],
-  templateUrl: './view-button.component.html',
-  styleUrl: './view-button.component.scss'
+    templateUrl: './view-button.component.html',
+    styleUrl: './view-button.component.scss'
 })
 export class ViewButtonComponent {
+
+    currentViewButton: number = 5;
+
     @Input() buttonNumber!: number;
     @Input() buttonTitle!: string;
-    //@Input() cameraPosition!: ICameraPosition;
+    @Input() cameraPosition!: ICameraPosition;
 
-    /*private viewSettingsStateService = inject(CurrentViewButton);
-    private threejsStateService = inject(CameraPositionService);*/
-
-    currentViewPositionButton: number = 5;
-
+    constructor(private cameraEventService: CameraEventService,
+                private viewButtonEventService: ViewButtonEventService) {
+    }
 
     onButtonClick(buttonNumber: number): void {
-        /*this.viewSettingsStateService.setCurrentViewPositionButton(buttonNumber);
-        this.threejsStateService.updateCameraPosition(this.cameraPosition)*/
+        this.viewButtonEventService.viewButtonChanges(buttonNumber)
+        this.cameraEventService.CameraChangePosition(this.cameraPosition)
     }
 
     public ngOnInit(): void {
-        /*this.viewSettingsStateService.currentViewButton$.subscribe(buttonNumber => {
-            this.currentViewPositionButton = buttonNumber;
-        });*/
+        this.viewButtonEventService.viewButtonEvent$.subscribe(buttonNumber => {
+            this.currentViewButton = buttonNumber;
+        });
     }
 
 }

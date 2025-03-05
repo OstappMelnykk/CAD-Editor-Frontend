@@ -7,38 +7,15 @@
     </div>
 
 
-
     <div class="settings__view-buttons">
-
         @for (button of viewButtons; track button.number) {
             <app-view-button
                 [buttonNumber]="button.number"
-                [buttonTitle]="button.title">
-                //[cameraPosition]="viewBtn.cameraPosition"
-
+                [buttonTitle]="button.title"
+                [cameraPosition]="button.cameraPosition">
             </app-view-button>
-
         }
-
     </div>
-
-
-   <!-- <div class="view-buttons-container">
-
-        @for (viewBtn of viewButtons; track viewBtn.number) {
-            <app-view-button
-                [buttonNumber]="viewBtn.number"
-                [buttonTitle]="viewBtn.title">
-                //[cameraPosition]="viewBtn.cameraPosition"
-
-            </app-view-button>
-
-        }
-
-    </div>-->
-
-
-
 
 
     <div class="settings__divider">
