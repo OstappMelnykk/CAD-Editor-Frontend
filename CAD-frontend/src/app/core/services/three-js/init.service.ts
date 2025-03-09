@@ -8,7 +8,7 @@ import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 export class InitService {
 
 
-    constructor(private globalVarsService: GlobalVariablesService) { }
+    constructor(private globalVariablesService: GlobalVariablesService) { }
 
     public init(canvas: HTMLCanvasElement) {
         if (!canvas)
@@ -48,10 +48,10 @@ export class InitService {
         };
         animate();
 
-        this.globalVarsService.set('canvas', _canvas);
-        this.globalVarsService.set('scene', _scene);
-        this.globalVarsService.set('camera', _camera);
-        this.globalVarsService.set('renderer', _renderer);
-        this.globalVarsService.set('orbitControls', _orbitControls);
+        this.globalVariablesService.set('canvas', _canvas);
+        this.globalVariablesService.set('scene', _scene);
+        this.globalVariablesService.set('camera', _camera);
+        this.globalVariablesService.set('renderer', _renderer);
+        this.globalVariablesService.set('orbitControls', _orbitControls);
     }
 }

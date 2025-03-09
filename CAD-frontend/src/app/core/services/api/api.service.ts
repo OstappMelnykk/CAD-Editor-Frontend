@@ -36,7 +36,7 @@ export class ApiService {
         return this.http.get<IPolygon[]>(this.apiUrl + '/GetPolygons')
     }
 
-    Default_20_Points(){
+    Default_Points(){
         return this.http.get<IPoint[]>(this.apiUrl + '/Get_20_DefaultSimplePoints')
     }
 }
