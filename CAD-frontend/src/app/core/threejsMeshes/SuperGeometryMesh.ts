@@ -34,7 +34,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
     private lineMaterial!: THREE.LineBasicMaterial;
 
 
-
     constructor(private apiService: ApiService) {
         super(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial());
     }
@@ -126,9 +125,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
                     console.error('Сталася помилка в SuperGeometryMesh -> get_dragable_points:', err);
                     reject(err);
                 },
-                complete: () => {
-                    console.log('Запит draggable точок завершено.');
-                },
+                complete: () => {},
             });
         });
     }
@@ -190,6 +187,16 @@ export class SuperGeometryMesh extends THREE.Mesh {
         return correctedIndices;
     }
 
+    public updatePolygonColors(newColor: THREE.Color) {
+        const colors = this.geometry.attributes['color'].array;
+        for (let i = 0; i < colors.length; i += 3) {
+            colors[i] = newColor.r;
+            colors[i + 1] = newColor.g;
+            colors[i + 2] = newColor.b;
+        }
+        this.geometry.attributes['color'].needsUpdate = true;
+    }
+
 
 
 
@@ -198,31 +205,20 @@ export class SuperGeometryMesh extends THREE.Mesh {
         this.geometry.dispose();
         console.log("Main geometry disposing:", this.geometry['type']);
 
-        if (Array.isArray(this.material)) {
-            this.material.forEach(mat => {
-                mat.dispose();
-                console.log("Main geometry material disposing:", mat['type']);
-            });
-        } else {
+        if (Array.isArray(this.material))
+            this.material.forEach(mat => {mat.dispose();});
+        else
             this.material.dispose();
-            console.log("Main geometry material disposing:", this.material['type']);
-        }
 
-        // Dispose children
+
         this.children.forEach(child => {
             if (child instanceof THREE.Mesh || child instanceof THREE.LineSegments) {
                 child.geometry.dispose();
-                console.log(`Child geometry disposing (${child.constructor.name}):`, child.geometry['type']);
 
-                if (Array.isArray(child.material)) {
-                    child.material.forEach(mat => {
-                        mat.dispose();
-                        console.log(`Child material disposing (${child.constructor.name}):`, mat['type']);
-                    });
-                } else {
+                if (Array.isArray(child.material))
+                    child.material.forEach(mat => {mat.dispose();});
+                else
                     child.material.dispose();
-                    console.log(`Child material disposing (${child.constructor.name}):`, child.material['type']);
-                }
             }
         });
     }
