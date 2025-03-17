@@ -17,6 +17,14 @@ export function createDraggableSphere(position: IPosition,
         position.y,
         position.z
     )
+
+    draggableSphereMesh.userData['isDraggable'] = true;
+    draggableSphereMesh.userData['DefaultPosition'] = {
+        x: position.x,
+        y: position.y,
+        z: position.z
+    } as IPosition;
+
     return draggableSphereMesh
 }
 
