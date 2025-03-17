@@ -13,12 +13,10 @@ export class DivisionEventService {
         polygons:[],
     }
 
-
     private divisionEvent = new BehaviorSubject<IAPIData>(this.initialAPIData)
-    private divisionEvent$ = this.divisionEvent.asObservable();
+    divisionEvent$ = this.divisionEvent.asObservable();
 
     DivisionOccurs(apiData: IAPIData): void {
         this.divisionEvent.next(apiData);
     }
-
 }

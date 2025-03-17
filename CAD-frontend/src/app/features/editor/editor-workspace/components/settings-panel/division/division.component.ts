@@ -5,13 +5,8 @@ import {ApiService} from '../../../../../../core/services/api/api.service';
 import {forkJoin} from 'rxjs';
 import {IAPIData} from '../../../../../../core/interfaces/api/IAPIData.interface';
 import {DivisionEventService} from '../../../../../../core/services/state/division-event.service';
-import {SuperGeometryMesh} from '../../../../../../core/threejsMeshes/SuperGeometryMesh';
-import * as THREE from 'three';
 import {GlobalVariablesService} from '../../../../../../core/services/three-js/global-variables.service';
-import {
-    SuperGeometryMeshOptions
-} from '../../../../../../core/threejsMeshes/interfaces/ISuperGeometryMeshOptions.interface';
-import {IMeshColors} from '../../../../../../core/threejsMeshes/interfaces/IMeshColors.interface';
+
 @Component({
     selector: 'app-division',
     standalone: true,
@@ -80,70 +75,12 @@ export class DivisionComponent {
                     pairsOfIndices: this.apiService.PairsOfIndices(),
                     polygons: this.apiService.Polygons()
                 }).subscribe((apiData: IAPIData) => {
-                    console.log('Дані зібрані з усіх запитів:', apiData);
-
                     this.divisionEvent.DivisionOccurs(apiData);
-
-                    const superGeometryMesh = new SuperGeometryMesh(this.apiService);
-                    superGeometryMesh.createMesh(
-                        apiData,
-                        {
-                            colors: {
-                                defaultColor: new THREE.Color('#5a8be2'),
-                                hoverColor: new THREE.Color('rgba(255,4,4,0.7)'),
-                                activeColor: new THREE.Color('rgba(0,89,255,0.61)'),
-                                linesegmentsDefaultColor: new THREE.Color(0xbfc2c7),
-                                sphereDefaultColor: new THREE.Color(0xbfc2c7),
-                                sphereDraggableColor: new THREE.Color('rgba(255,4,4)')
-                            } as IMeshColors,
-
-                            opacity: 0.2,
-                            wireframe: false,
-                            depthWrite: false,
-                            depthTest: true,
-                        } as SuperGeometryMeshOptions
-                    )
-
-                    let scene = this.globalVariablesService.get('scene') as THREE.Scene;
-                    scene.add(superGeometryMesh);
-
-
                 });
             },
             error: (err) => {
-                console.error('Помилка під час виконання Divide:', err);
+                console.error('Error while execution Divide:', err);
             }
         });
     }
 }
-
-
-
-
-
-
-
-
-
-
-/* const superGeometryMesh = new SuperGeometryMesh(
-     this.apiService,
-     apiData,
-     {
-         colors: {
-             defaultColor: new THREE.Color('#5a8be2'),
-             hoverColor: new THREE.Color('rgba(255,4,4,0.7)'),
-             activeColor: new THREE.Color('rgba(0,89,255,0.61)'),
-             linesegmentsDefaultColor: new THREE.Color(0xbfc2c7),
-             sphereDefaultColor: new THREE.Color(0xbfc2c7),
-             sphereDraggableColor: new THREE.Color(0xbfc2c7)
-         } as IMeshColors,
-
-         opacity: 0.2,
-         wireframe: false,
-         depthWrite: false,
-         depthTest: true,
-     } as SuperGeometryMeshOptions
-
- )
-*/
