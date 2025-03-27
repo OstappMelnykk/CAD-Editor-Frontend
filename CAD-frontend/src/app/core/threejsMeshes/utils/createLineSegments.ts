@@ -18,21 +18,9 @@ export function createLineSegments(
     lineGeometry.setIndex(indices);
     lineGeometry.computeVertexNormals();
 
-    return new THREE.LineSegments(lineGeometry, lineMaterial);
+
+    const lineSegments = new THREE.LineSegments(lineGeometry, lineMaterial);
+    lineSegments.userData['draggable'] = false;
+
+    return lineSegments;
 }
-
-
-
-
-
-
-/* const vertices: number[] = [];
- const indices: number[] = [];
-
- points.forEach((point) => {
-     vertices.push(point.x, point.y, point.z);
- });
-
- pairsOfIndices.forEach((pair) => {
-     indices.push(pair.idx1, pair.idx2);
- });*/
