@@ -4,15 +4,15 @@ import {IMeshColors} from './interfaces/IMeshColors.interface';
 
 export const meshOptions = {
     colors: {
-        defaultColor: new THREE.Color('#5a8be2'),
-        hoverColor: new THREE.Color('rgba(0,89,255,0.61)'),
-        activeColor: new THREE.Color('rgba(255,4,4,0.7)'),
-        linesegmentsDefaultColor: new THREE.Color(0xbfc2c7),
-        sphereDefaultColor: new THREE.Color(0xbfc2c7),
-        sphereDraggableColor: new THREE.Color('rgba(255,4,4)')
+        defaultMeshColor: new THREE.Color('#5a8be2'),
+        hoverMeshColor: new THREE.Color('rgba(0,89,255,0.61)'),
+        activeMeshColor: new THREE.Color('rgba(255,4,4,0.7)'),
+        wireframeColor: new THREE.Color(0xbfc2c7),
+        defaultSphereColor: new THREE.Color(0xbfc2c7),
+        draggableSphereColor: new THREE.Color('rgba(255,4,4)')
     } as IMeshColors,
 
-    opacity: 0.2,
+    wireframeOpacity: 0.2,
     wireframe: false,
     depthWrite: false,
     depthTest: true,

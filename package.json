@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/OstappMelnykk/CAD-Editor-Frontend#readme",
   "devDependencies": {
-    "@angular/cli": "^19.2.0"
+    "@angular/cli": "^19.2.0",
+    "@types/node": "^22.13.11"
   }
 }
