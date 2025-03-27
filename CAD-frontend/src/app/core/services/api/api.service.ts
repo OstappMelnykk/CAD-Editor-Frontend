@@ -25,7 +25,7 @@ export class ApiService {
     }
 
     Points(): Observable<IPoint[]>{
-        return this.http.get<IPoint[]>(this.apiUrl + '/GetPoints')
+        return this.http.get<IPoint[]>(this.apiUrl + '/GetComplexPoints')
     }
 
     PairsOfIndices(): Observable<IPairOfIndices[]>{
@@ -36,7 +36,8 @@ export class ApiService {
         return this.http.get<IPolygon[]>(this.apiUrl + '/GetPolygons')
     }
 
-    Default_Points(){
-        return this.http.get<IPoint[]>(this.apiUrl + '/Get_20_DefaultSimplePoints')
+    DefaultPoints(): Observable<IPoint[]>{
+        return this.http.get<IPoint[]>(this.apiUrl + '/Get_20_DefaultComplexPoints')
     }
+
 }
