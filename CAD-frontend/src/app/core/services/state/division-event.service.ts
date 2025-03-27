@@ -7,13 +7,14 @@ import {BehaviorSubject} from 'rxjs';
 })
 export class DivisionEventService {
 
-    private initialAPIData: IAPIData = {
+    private APIData: IAPIData = {
         points: [],
         pairsOfIndices:[],
         polygons:[],
+        defaultComplexPoints:[],
     }
 
-    private divisionEvent = new BehaviorSubject<IAPIData>(this.initialAPIData)
+    private divisionEvent = new BehaviorSubject<IAPIData>(this.APIData)
     divisionEvent$ = this.divisionEvent.asObservable();
 
     DivisionOccurs(apiData: IAPIData): void {
