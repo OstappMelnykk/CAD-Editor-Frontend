@@ -6,4 +6,5 @@ export interface IAPIData {
     points: IPoint[] | null;
     pairsOfIndices: IPairOfIndices[] | null;
     polygons: IPolygon[] | null;
+    DefaultComplexPoints: IPoint[] | null;
 }
