@@ -1,11 +1,16 @@
-import {Component, inject} from '@angular/core';
-import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
-import {IDivisionRequest} from '../../../../../../core/models/DTOs/IDivisionRequest.interface';
-import {ApiService} from '../../../../../../core/services/api/api.service';
-import {forkJoin} from 'rxjs';
-import {IAPIData} from '../../../../../../core/interfaces/api/IAPIData.interface';
-import {DivisionEventService} from '../../../../../../core/services/state/division-event.service';
-import {GlobalVariablesService} from '../../../../../../core/services/three-js/global-variables.service';
+import { Component } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
+
+// Interfaces
+import { IDivisionRequest } from '../../../../../../core/models/DTOs/IDivisionRequest.interface';
+import { IAPIData } from '../../../../../../core/interfaces/api/IAPIData.interface';
+
+// Services
+import { ApiService } from '../../../../../../core/services/api/api.service';
+import { DivisionEventService } from '../../../../../../core/services/state/division-event.service';
+import { GlobalVariablesService } from '../../../../../../core/services/three-js/global-variables.service';
+
 
 @Component({
     selector: 'app-division',
@@ -20,10 +25,10 @@ import {GlobalVariablesService} from '../../../../../../core/services/three-js/g
 export class DivisionComponent {
     title: string = 'Division';
 
-    constructor(private apiService: ApiService,
-                private divisionEvent: DivisionEventService,
-                private globalVariablesService: GlobalVariablesService)
-    {}
+    constructor(
+        private apiService: ApiService,
+        private divisionEvent: DivisionEventService,
+    ) {}
 
     public myForm = new FormGroup({
         x: new FormControl(),
@@ -73,7 +78,8 @@ export class DivisionComponent {
                 forkJoin({
                     points: this.apiService.Points(),
                     pairsOfIndices: this.apiService.PairsOfIndices(),
-                    polygons: this.apiService.Polygons()
+                    polygons: this.apiService.Polygons(),
+                    defaultComplexPoints: this.apiService.DefaultPoints(),
                 }).subscribe((apiData: IAPIData) => {
                     this.divisionEvent.DivisionOccurs(apiData);
                 });
