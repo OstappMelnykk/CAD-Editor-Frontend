@@ -1,11 +1,10 @@
 import * as THREE from 'three';
 
 export interface IMeshColors {
-    defaultColor: THREE.Color,
-    hoverColor: THREE.Color,
-    activeColor: THREE.Color,
-
-    linesegmentsDefaultColor: THREE.Color,
-    sphereDefaultColor: THREE.Color,
-    sphereDraggableColor: THREE.Color,
+    defaultMeshColor: THREE.Color,
+    hoverMeshColor: THREE.Color,
+    activeMeshColor: THREE.Color,
+    wireframeColor: THREE.Color,
+    defaultSphereColor: THREE.Color,
+    draggableSphereColor: THREE.Color,
 }
