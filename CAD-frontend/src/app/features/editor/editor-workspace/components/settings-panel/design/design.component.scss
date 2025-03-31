@@ -1,3 +1,159 @@
+.design-form {
+    display: grid;
+    grid-template-columns: 50% 50%;
+    grid-template-rows: repeat(6, 2.3em) 1.7em;
+    grid-template-areas:
+        'label-defaultMeshColor input-defaultMeshColor'
+        'label-hoverMeshColor input-hoverMeshColor'
+        'label-activeMeshColor input-activeMeshColor'
+        'label-wireframeColor input-wireframeColor'
+        'label-defaultSphereColor input-defaultSphereColor'
+        'label-draggableSphereColor input-draggableSphereColor'
+        'label-meshOpacity input-meshOpacity';
+    grid-gap: 1em 0px;
+    overflow: auto;
+
+    &__label {
+        font-size: 16px;
+        font-weight: 400;
+
+        &--defaultMeshColor {
+            grid-area: label-defaultMeshColor;
+        }
+        &--hoverMeshColor {
+            grid-area: label-hoverMeshColor;
+        }
+        &--activeMeshColor {
+            grid-area: label-activeMeshColor;
+        }
+        &--wireframeColor {
+            grid-area: label-wireframeColor;
+        }
+        &--defaultSphereColor {
+            grid-area: label-defaultSphereColor;
+        }
+        &--draggableSphereColor {
+            grid-area: label-draggableSphereColor;
+        }
+        &--meshOpacity {
+            grid-area: label-meshOpacity;
+        }
+    }
+
+    &__input {
+        all: unset;
+        border: none;
+        border-bottom: 2px solid #545F71;
+        outline: none;
+        padding: 2px 0;
+        width: 100%;
+        transition: border-color 0.4s ease-in-out, transform 0.4s ease-in-out;
+
+        &::placeholder {
+            color: #768294;
+            font-weight: 100;
+            font-size: 15px;
+            transition: opacity 1.4s ease-in-out;
+        }
+
+        &:focus {
+            border-color: transparent;
+        }
+
+        &:focus::placeholder {
+            opacity: 0;
+        }
+
+        &--defaultMeshColor {
+            grid-area: input-defaultMeshColor;
+        }
+        &--hoverMeshColor {
+            grid-area: input-hoverMeshColor;
+        }
+        &--activeMeshColor {
+            grid-area: input-activeMeshColor;
+        }
+        &--wireframeColor {
+            grid-area: input-wireframeColor;
+        }
+        &--defaultSphereColor {
+            grid-area: input-defaultSphereColor;
+        }
+        &--draggableSphereColor {
+            grid-area: input-draggableSphereColor;
+        }
+        &--meshOpacity {
+            grid-area: input-meshOpacity;
+        }
+    }
+
+    input[type="range"] {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 6px;
+        background: #ddd;
+        border-radius: 5px;
+        outline: none;
+        transition: background 0.3s ease-in-out;
+
+        &::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #2E3440;
+            cursor: pointer;
+            transition: background 0.3s ease-in-out;
+        }
+
+        &::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #2E3440;
+            cursor: pointer;
+        }
+
+        &:focus {
+            background: #bbb;
+        }
+    }
+}
+
+
+
+
+/*
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+input[type="number"] {
+    appearance: none;
+}
+
+
+::ng-deep .rgba-text input[type="number"]::-webkit-inner-spin-button,
+::ng-deep .rgba-text input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+::ng-deep .rgba-text input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: none;
+}
+
+
+
+
 .settings {
 
     display: grid;
@@ -21,4 +177,143 @@
             margin: 0px;
         }
     }
+
+
+    input[cpcolorpicker] {
+        border: none;
+        border-radius: 3px;
+        padding: 0.5em;
+        cursor: pointer;
+        width: 40px;
+        height: 40px;
+        font-size: 0;
+        transition: all 0.3s ease;
+
+        &:focus {
+            outline: none;
+        }
+    }
 }
+
+
+
+.division-form {
+    display: grid;
+    grid-template-columns: 50% 50%;
+    grid-template-rows: repeat(3, 1.3em) 1.7em 1.7em;
+    grid-template-areas:
+        'lable-defaultMeshColor input-defaultMeshColor'
+        'lable-hoverMeshColor   input-hoverMeshColor'
+        'lable-activeMeshColor  input-activeMeshColor'
+        'lable-wireframeColor input-wireframeColor'
+        'lable-defaultSphereColor input-defaultSphereColor'
+        'lable-draggableSphereColor input-draggableSphereColor'
+        'lable-meshOpacity input-meshOpacity'
+        'none defaultVals'
+        'none button';
+    grid-gap: 1em 0px;
+    overflow: auto;
+
+    &__label {
+
+
+
+
+        &--defaultMeshColor {
+            grid-area: lable-defaultMeshColor;
+        }
+        &--hoverMeshColor {
+            grid-area: lable-hoverMeshColor;
+        }
+        &--activeMeshColor {
+            grid-area: lable-activeMeshColor;
+        }
+        &--wireframeColor {
+            grid-area: lable-wireframeColor;
+        }
+        &--defaultSphereColor {
+            grid-area: lable-defaultSphereColor;
+        }
+        &--draggableSphereColor {
+            grid-area: lable-draggableSphereColor;
+        }
+        &--meshOpacity {
+            grid-area: lable-meshOpacity;
+        }
+    }
+
+    &__input {
+        all: unset;
+        border: none;
+        border-bottom: 2px solid #545F71;
+        outline: none;
+        padding: 2px 0;
+        width: 100%;
+        transition: border-color 0.4s ease-in-out, transform 0.4s ease-in-out;
+
+        &::placeholder {
+            color: #768294;
+            opacity: 1;
+            font-weight: 100;
+            font-size: 15px;
+            transition: opacity 1.4s ease-in-out;
+        }
+
+        &:focus {
+            border-color: transparent;
+            transition: border-color 0.4s ease-in-out, transform 0.4s ease-in-out;
+        }
+
+
+        &:focus::placeholder {
+            opacity: 0;
+        }
+        &:not(:focus)::placeholder {
+            opacity: 1;
+        }
+
+
+        &--defaultMeshColor {
+            grid-area: input-defaultMeshColor;
+        }
+        &--hoverMeshColor {
+            grid-area: input-hoverMeshColor;
+        }
+        &--activeMeshColor {
+            grid-area: input-activeMeshColor;
+        }
+        &--wireframeColor {
+            grid-area: input-wireframeColor;
+        }
+        &--defaultSphereColor {
+            grid-area: input-defaultSphereColor;
+        }
+        &--draggableSphereColor {
+            grid-area: input---draggableSphereColor;
+        }
+        &--meshOpacity {
+            grid-area: input-meshOpacity;
+        }
+    }
+
+    &__button {
+        border-radius: 0.2em;
+        background-color: transparent;
+        transition: background-color 0.3s ease-in-out, transform 0.3s ease-in-out;
+        border: 0.1em solid #2E3440;
+
+        &:hover {
+            background-color: #2E3440;
+            transition: background-color 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+
+        &--default {
+            grid-area: defaultVals;
+        }
+
+        &--execute {
+            grid-area: button;
+        }
+    }
+}
+*/

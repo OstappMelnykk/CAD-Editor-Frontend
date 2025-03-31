@@ -58,6 +58,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
         wireframeOpacity: 0.2,
         mehsOpacity: 0.2,
+        //mehsOpacity: 1,
         wireframe: false,
         depthWrite: false,
         depthTest: true,
@@ -105,6 +106,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
             opacity: this.meshOptions.mehsOpacity,
             depthWrite: this.meshOptions.depthWrite,
             depthTest: this.meshOptions.depthTest,
+            side: THREE.DoubleSide,
         });
     }
 

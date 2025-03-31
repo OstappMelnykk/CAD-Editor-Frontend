@@ -6,12 +6,11 @@ import {CanvasComponent} from './components/canvas/canvas.component';
 
 
 @NgModule({
-  declarations: [CanvasComponent
-  ],
+  declarations: [],
   imports: [
-    CommonModule,
-    EditorWorkspaceRoutingModule,
-
+      CommonModule,
+      EditorWorkspaceRoutingModule,
+      CanvasComponent,
   ]
 })
 export class EditorWorkspaceModule { }

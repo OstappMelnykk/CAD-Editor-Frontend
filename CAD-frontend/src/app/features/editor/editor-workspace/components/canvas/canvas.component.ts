@@ -29,6 +29,7 @@ import {IPoint} from '../../../../../core/interfaces/api/IPoint.interface';
 @Component({
     selector: 'app-canvas',
     templateUrl: './canvas.component.html',
+    standalone: true,
     styleUrl: './canvas.component.scss'
 })
 export class CanvasComponent implements OnInit {
@@ -36,6 +37,9 @@ export class CanvasComponent implements OnInit {
     activeObject: SuperGeometryMesh | null = null;
     hoveredObject: THREE.Object3D | null = null;
     hoveredPoint: THREE.Vector3 | null = null;
+    PointVisualisation: THREE.Object3D = new THREE.Mesh(new THREE.SphereGeometry(0.1, 32, 32), new THREE.MeshBasicMaterial({color: new THREE.Color('#00ff00')}));
+    isRemoved: boolean = true;
+
 
     pickableObjects: THREE.Object3D[] = [];
     draggableObjects: THREE.Object3D[] = [];
@@ -48,6 +52,8 @@ export class CanvasComponent implements OnInit {
     camera!: THREE.PerspectiveCamera;
     renderer!: THREE.WebGLRenderer;
     orbitControls!: OrbitControls;
+
+
 
 
     constructor(
@@ -92,6 +98,13 @@ export class CanvasComponent implements OnInit {
 
         this.renderer.domElement.addEventListener('mousemove', (event: MouseEvent) => {
             this.hoveredPoint = meshHover.call(this, event, { setMouse: this.setMouse.bind(this) });
+            if (this.hoveredPoint === null || !this.isRemoved){
+                this.scene.remove(this.PointVisualisation);
+            }
+            else{
+                this.PointVisualisation.position.copy(this.hoveredPoint);
+                this.scene.add(this.PointVisualisation);
+            }
         });
 
         this.apiService.DefaultPoints().subscribe({

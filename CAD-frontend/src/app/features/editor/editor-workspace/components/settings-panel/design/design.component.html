@@ -6,7 +6,104 @@
         <hr>
     </div>
 
-    <p>settings-design works!</p>
+    <form [formGroup]="settingsForm" class="design-form">
+        <!-- Default Mesh Color -->
+        <label class="form__label form__label--defaultMeshColor"  for="defaultMeshColor">Default Mesh Color:</label>
+        <input
+            id="defaultMeshColor"
+            class="color-picker-input form__input form__input--defaultMeshColor"
+            cpColorPicker
+            [(colorPicker)]="defaultMeshColor"
+            (colorPickerChange)="onColorChange('defaultMeshColor', $event)"
+            [style.background]="defaultMeshColor"
+            formControlName="defaultMeshColor"
+            type="text"
+        />
+
+        <!-- Hover Mesh Color -->
+        <label class="form__label form__label--hoverMeshColor" for="hoverMeshColor">Hover Mesh Color:</label>
+        <input
+            id="hoverMeshColor"
+            class="color-picker-input form__input form__input--hoverMeshColor"
+            cpColorPicker
+            [(colorPicker)]="hoverMeshColor"
+            (colorPickerChange)="onColorChange('hoverMeshColor', $event)"
+            [style.background]="hoverMeshColor"
+            formControlName="hoverMeshColor"
+            type="text"
+        />
+
+        <!-- Active Mesh Color -->
+        <label lass="form__label form__label--activeMeshColor" for="activeMeshColor">Active Mesh Color:</label>
+        <input
+            id="activeMeshColor"
+            class="color-picker-input form__input form__input--activeMeshColor"
+            cpColorPicker
+            [(colorPicker)]="activeMeshColor"
+            (colorPickerChange)="onColorChange('activeMeshColor', $event)"
+            [style.background]="activeMeshColor"
+            formControlName="activeMeshColor"
+            type="text"
+        />
+
+        <!-- Wireframe Color -->
+        <label class="form__label form__label--wireframeColor" for="wireframeColor">Wireframe Color:</label>
+        <input
+            id="wireframeColor"
+            class="color-picker-input form__input form__input--wireframeColor"
+            cpColorPicker
+            [(colorPicker)]="wireframeColor"
+            (colorPickerChange)="onColorChange('wireframeColor', $event)"
+            [style.background]="wireframeColor"
+            formControlName="wireframeColor"
+            type="text"
+        />
+
+        <!-- Default Sphere Color -->
+        <label class="form__label form__label--defaultSphereColor" for="defaultSphereColor">Default Sphere Color:</label>
+        <input
+            id="defaultSphereColor"
+            class="color-picker-input form__input form__input--defaultSphereColor"
+            cpColorPicker
+            [(colorPicker)]="defaultSphereColor"
+            (colorPickerChange)="onColorChange('defaultSphereColor', $event)"
+            [style.background]="defaultSphereColor"
+            formControlName="defaultSphereColor"
+            type="text"
+        />
+
+        <!-- Draggable Sphere Color -->
+        <label class="form__label form__label--draggableSphereColor" for="draggableSphereColor">Draggable Sphere Color:</label>
+        <input
+            id="draggableSphereColor"
+            class="color-picker-input form__input form__input--draggableSphereColor"
+            cpColorPicker
+            [(colorPicker)]="draggableSphereColor"
+            (colorPickerChange)="onColorChange('draggableSphereColor', $event)"
+            [style.background]="draggableSphereColor"
+            formControlName="draggableSphereColor"
+            type="text"
+        />
+
+
+
+        <label class="form__label form__label--meshOpacity" for="meshOpacity">Mesh Opacity:</label>
+        <input
+            id="meshOpacity"
+            class="form__input form__input--meshOpacity"
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            [value]="meshOpacity"
+            (input)="onOpacityChange($event)"
+        />
+        <span>{{ meshOpacity }}</span>
+
+
+    </form>
+
+
 
     <div class="settings__divider">
         <hr>

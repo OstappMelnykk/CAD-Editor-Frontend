@@ -10,7 +10,7 @@ export function createDefaultSphere(
 ): THREE.Mesh
 {
 
-    const sphereDefaultGeometry: THREE.SphereGeometry = new THREE.SphereGeometry(0.013, 32, 32);
+    const sphereDefaultGeometry: THREE.SphereGeometry = new THREE.SphereGeometry(0.016, 32, 32);
     const sphereDefaultMaterial: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial({
         color: color
     });
