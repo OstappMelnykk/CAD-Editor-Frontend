@@ -10,6 +10,7 @@ import {ViewButtonEventService} from '../../../../../../../core/services/state/v
         NgClass
     ],
     templateUrl: './view-button.component.html',
+    standalone: true,
     styleUrl: './view-button.component.scss'
 })
 export class ViewButtonComponent {

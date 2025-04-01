@@ -17,7 +17,6 @@ import { createDraggableSphere } from './utils/createDraggableSphere';
 import { createDefaultSphere } from './utils/createDefaultSphere';
 import {IMeshColors} from './interfaces/IMeshColors.interface';
 import {DEFAULT_POINTS} from './DefaultPoints';
-import {createLineSegments} from './utils/createLineSegments';
 
 
 
@@ -65,9 +64,9 @@ export class SuperGeometryMesh extends THREE.Mesh {
     } as SuperGeometryMeshOptions
 
 
-    private lineSegments!: THREE.LineSegments
-    private lineMaterial!: THREE.LineBasicMaterial;
-    private lineGeometry!: THREE.BufferGeometry;
+    public lineSegments!: THREE.LineSegments
+    public lineMaterial!: THREE.LineBasicMaterial;
+    public lineGeometry!: THREE.BufferGeometry;
 
 
     constructor(
@@ -80,8 +79,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
         this.camera = this.globalVariablesService.get('camera') as THREE.PerspectiveCamera;
         this.renderer = this.globalVariablesService.get('renderer') as THREE.WebGLRenderer;
         this.orbitControls = this.globalVariablesService.get('orbitControls') as OrbitControls;
-
-
     }
 
 

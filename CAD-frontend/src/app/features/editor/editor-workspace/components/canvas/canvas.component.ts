@@ -25,6 +25,7 @@ import { mousedownToChoose } from './Listeners/mousedownToChoose';
 import { meshHover } from './Listeners/meshHover';
 import {DEFAULT_POINTS} from '../../../../../core/threejsMeshes/DefaultPoints';
 import {IPoint} from '../../../../../core/interfaces/api/IPoint.interface';
+import {DragControls} from 'three/examples/jsm/controls/DragControls.js';
 
 @Component({
     selector: 'app-canvas',
@@ -116,6 +117,68 @@ export class CanvasComponent implements OnInit {
             },
             error: (err) => console.error('Error while fetching DefaultPoints:', err),
         });
+
+
+
+       /* const boxGeometry = new THREE.BoxGeometry();
+        const boxMaterial = new THREE.MeshNormalMaterial();
+        const superMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+
+        const lineGeometry = new THREE.EdgesGeometry(boxGeometry);
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+        const lineSegments = new THREE.LineSegments(lineGeometry, lineMaterial);
+
+        superMesh.add(lineSegments);
+
+        superMesh.position.set(2, 2, 2);
+        this.scene.add(superMesh);
+
+        const dragControls = new DragControls([superMesh], this.camera, this.renderer.domElement);
+        dragControls.transformGroup = false; // Якщо є проблеми, можеш увімкнути/вимкнути
+
+        dragControls.raycaster.params.Line.threshold = 0.01;
+
+        dragControls.addEventListener('dragstart', () => {
+            this.orbitControls.enabled = false; // Вимикаємо OrbitControls під час перетягування
+        });
+
+        dragControls.addEventListener('dragend', () => {
+            this.orbitControls.enabled = true; // Вмикаємо OrbitControls після перетягування
+        });*/
+
+
+
+
+        /*const group = new THREE.Group();
+
+        const boxGeometry = new THREE.BoxGeometry();
+        const boxMaterial = new THREE.MeshNormalMaterial();
+        const superMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+
+        const lineGeometry = new THREE.EdgesGeometry(boxGeometry);
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+        const lineSegments = new THREE.LineSegments(lineGeometry, lineMaterial);
+
+        superMesh.position.set(2, 2, 2);
+
+        superMesh.add(lineSegments);
+
+        group.add(superMesh);
+
+        this.scene.add(group);
+
+        const dragControls = new DragControls([group], this.camera, this.renderer.domElement);
+        dragControls.transformGroup = true;
+        dragControls.raycaster.params.Line.threshold = 0.01;
+
+
+        dragControls.addEventListener('dragstart', () => {
+            this.orbitControls.enabled = false;
+        });
+
+        dragControls.addEventListener('dragend', () => {
+            this.orbitControls.enabled = true;
+        });*/
     }
 
 
@@ -127,7 +190,6 @@ export class CanvasComponent implements OnInit {
         }
 
         const activeMeshPosition: THREE.Vector3 = this.activeObject.position;
-        const activeMeshDefaultPoints = (this.activeObject as SuperGeometryMesh).defaultPoints
 
         if (this.activeObject && this.activeObject.parent) {
             this.scene.remove(this.activeObject);
@@ -213,3 +275,60 @@ export class CanvasComponent implements OnInit {
         this.orbitControls?.update();
     }
 }
+
+
+
+
+/*let group = new THREE.Group();
+
+        const divisionRequest = { x: 4, y: 4, z: 4 } as IDivisionRequest
+
+        this.apiService.Divide(divisionRequest).subscribe({
+            next: () => {
+                forkJoin({
+                    points: this.apiService.Points(),
+                    pairsOfIndices: this.apiService.PairsOfIndices(),
+                    polygons: this.apiService.Polygons(),
+                    defaultComplexPoints: this.apiService.DefaultPoints(),
+                }).subscribe({
+                    next: (apiData: IAPIData) => {
+
+                        const superGeometryMesh = new SuperGeometryMesh(this.apiService, this.globalVariablesService);
+                        (async () => {
+                            await superGeometryMesh.createMesh(apiData);
+                            console.log("Created")
+
+                            superGeometryMesh.position.copy(new THREE.Vector3(0, 0, 0));
+                            const linesegments = superGeometryMesh.lineSegments
+
+
+                            const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                            const cube1 = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), material);
+                            cube1.position.set(-1.5, 0, 0);
+
+                            const cube2 = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), material);
+                            cube2.position.set(1.5, 0, 0);
+
+
+                            group.add(superGeometryMesh)
+                            group.add(linesegments)
+                            group.add(cube1)
+                            group.add(cube2)
+
+
+                            group.children.forEach(child => {
+                                child.matrixAutoUpdate = false;
+                            });
+
+
+                            this.pickableObjects.push(superGeometryMesh);
+                            this.draggableObjects = [group];
+                            console.log(group)
+
+                            this.scene.add(group);
+                            return superGeometryMesh
+                        })();
+                    },
+                });
+            },
+        });*/
