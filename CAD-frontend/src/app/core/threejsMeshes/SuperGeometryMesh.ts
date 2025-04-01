@@ -45,6 +45,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
     dragControls!: DragControls;
 
+
     meshOptions: SuperGeometryMeshOptions = {
         colors: {
             defaultMeshColor: new THREE.Color('#5a8be2'),
@@ -71,7 +72,8 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
     constructor(
         private apiService: ApiService,
-        private globalVariablesService: GlobalVariablesService)
+        private globalVariablesService: GlobalVariablesService,
+        private outerDragControls: DragControls)
     {
         super(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial());
 
@@ -242,11 +244,15 @@ export class SuperGeometryMesh extends THREE.Mesh {
                 Math.abs(pos1.y - pos2.y) < tolerance &&
                 Math.abs(pos1.z - pos2.z) < tolerance;
         };
-        //let pointIndex: number = -1;
 
         this.dragControls.addEventListener('dragstart', (event) => {
             isDragging = true;
             this.orbitControls.enabled = false;
+
+            if (this.outerDragControls) {
+                this.outerDragControls.enabled = false;
+            }
+
             if (!this.dragableSpheres.includes(event.object)) return;
             const sphere = event.object as THREE.Mesh;
             sphere.scale.set(2, 2, 2);
@@ -260,16 +266,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
                 )
             );
 
-
-            /*this.draggablePointIndex = this.defaultPoints.findIndex(
-                defaultPoint =>
-                    defaultPoint.x === sphere.position.x &&
-                    defaultPoint.y === sphere.position.y &&
-                    defaultPoint.z === sphere.position.z
-            );*/
-            // console.log(this.draggablePointIndex)
-
-
             if (this.draggablePointIndex === -1) {
                 console.error('----------------');
                 return;
@@ -279,18 +275,12 @@ export class SuperGeometryMesh extends THREE.Mesh {
         this.dragControls.addEventListener('drag', (event) =>
         {
             if (!isDragging) return;
-            //console.log(this.draggablePointIndex)
             if ((this as any).draggingSphere !== event.object) return;
 
             if (this.draggablePointIndex === -1) {
                 console.error('+++++++++++++++++');
                 return;
             }
-
-           /* if (draggablePointIndex === -1) {
-                console.error(' точки не визначений. Подія "dragstart" могла не виконатись.');
-                return;
-            }*/
 
             const sphere = event.object as THREE.Mesh;
 
@@ -323,8 +313,12 @@ export class SuperGeometryMesh extends THREE.Mesh {
             if (!isDragging) return;
             isDragging = false;
             this.orbitControls.enabled = true;
+
+            if (this.outerDragControls) {
+                this.outerDragControls.enabled = true;
+            }
+
             if ((this as any).draggingSphere !== event.object) return;
-            //this.orbitControls.enabled = true;
             const sphere = event.object as THREE.Mesh;
             sphere.scale.set(1, 1, 1);
             (this as any).draggingSphere = null;
