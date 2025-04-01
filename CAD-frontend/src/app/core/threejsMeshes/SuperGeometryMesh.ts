@@ -57,7 +57,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
         } as IMeshColors,
 
         wireframeOpacity: 0.2,
-        mehsOpacity: 0.2,
+        mehsOpacity: 0.1,
         //mehsOpacity: 1,
         wireframe: false,
         depthWrite: false,
@@ -94,7 +94,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
         this.initializeGeometry();
         this.createSpheres();
 
-        console.log("----------",this.defaultPoints);
+        //console.log("----------",this.defaultPoints);
     }
 
     private initializeMaterial(): void {
@@ -249,6 +249,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
             isDragging = true;
             this.orbitControls.enabled = false;
 
+            console.log("this.outerDragControls.enabled = false;")
             if (this.outerDragControls) {
                 this.outerDragControls.enabled = false;
             }
@@ -310,13 +311,12 @@ export class SuperGeometryMesh extends THREE.Mesh {
         });
 
         this.dragControls.addEventListener('dragend', (event) => {
-            if (!isDragging) return;
             isDragging = false;
+
             this.orbitControls.enabled = true;
 
-            if (this.outerDragControls) {
+            if (this.outerDragControls)
                 this.outerDragControls.enabled = true;
-            }
 
             if ((this as any).draggingSphere !== event.object) return;
             const sphere = event.object as THREE.Mesh;
