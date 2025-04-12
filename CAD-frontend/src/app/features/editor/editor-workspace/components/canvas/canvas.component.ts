@@ -104,7 +104,7 @@ export class CanvasComponent implements OnInit {
             this.hoveredPoint = meshHover.call(this, event, { setMouse: this.setMouse.bind(this) });
             if (this.hoveredPoint === null || !this.isRemoved){
 
-                //this.scene.remove(this.PointVisualisation);
+                this.scene.remove(this.PointVisualisation);
             }
             else{
                 this.PointVisualisation.position.copy(this.hoveredPoint);

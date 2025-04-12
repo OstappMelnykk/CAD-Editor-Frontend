@@ -308,6 +308,11 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
             positionAttribute.needsUpdate = true;
             linePositionAttribute.needsUpdate = true;
+
+            this.geometry.computeBoundingBox();
+            this.geometry.computeBoundingSphere();
+            this.geometry.computeVertexNormals();
+
         });
 
         this.dragControls.addEventListener('dragend', (event) => {
