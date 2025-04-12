@@ -322,6 +322,15 @@ export class SuperGeometryMesh extends THREE.Mesh {
             const sphere = event.object as THREE.Mesh;
             sphere.scale.set(1, 1, 1);
             (this as any).draggingSphere = null;
+
+            let draggedObjectMesh = this as SuperGeometryMesh;
+
+            if (Array.isArray(draggedObjectMesh.material)) {
+                console.warn('Material is an array. Cannot set opacity on an array of materials.');
+            } else {
+                draggedObjectMesh.material.transparent = true;
+                draggedObjectMesh.material.opacity = 0.2;
+            }
         });
 
         this.renderer.domElement.addEventListener('mouseup', () => {

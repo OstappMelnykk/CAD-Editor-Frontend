@@ -38,7 +38,7 @@ export class CanvasComponent implements OnInit {
     activeObject: SuperGeometryMesh | null = null;
     hoveredObject: THREE.Object3D | null = null;
     hoveredPoint: THREE.Vector3 | null = null;
-    PointVisualisation: THREE.Object3D = new THREE.Mesh(new THREE.SphereGeometry(0.1, 32, 32), new THREE.MeshBasicMaterial({color: new THREE.Color('#00ff00')}));
+    PointVisualisation: THREE.Object3D = new THREE.Mesh(new THREE.SphereGeometry(0.02, 32, 32), new THREE.MeshBasicMaterial({color: new THREE.Color('#00ff00')}));
     isRemoved: boolean = true;
 
 
@@ -178,7 +178,7 @@ export class CanvasComponent implements OnInit {
                 if (Array.isArray(draggedObjectMesh.material)) {
                     console.warn('Material is an array. Cannot set opacity on an array of materials.');
                 } else {
-                    draggedObjectMesh.material.transparent = true; // Включаємо підтримку прозорості
+                    draggedObjectMesh.material.transparent = true;
                     draggedObjectMesh.material.opacity = 0.2;
                 }
             }
