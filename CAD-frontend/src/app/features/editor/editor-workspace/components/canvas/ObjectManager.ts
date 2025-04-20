@@ -1,5 +1,6 @@
 import {SuperGeometryMesh} from '../../../../../core/threejsMeshes/SuperGeometryMesh';
 import * as THREE from 'three';
+import {DragControls} from 'three/examples/jsm/controls/DragControls.js';
 
 
 
@@ -19,6 +20,8 @@ export class ObjectManager {
         this.groups.set(mesh.uuid, group);
         this.meshes.set(mesh.uuid, mesh);
     }
+
+
 
     removeMesh(mesh: SuperGeometryMesh): void {
         const group = this.groups.get(mesh.uuid);

@@ -16,8 +16,6 @@ import { createDefaultSphere } from './utils/createDefaultSphere';
 import {DEFAULT_POINTS} from './DefaultPoints';
 import {IDivisionConfig} from '../interfaces/api/IDivisionConfig';
 import {forkJoin, Subject} from 'rxjs';
-import {IPairOfIndices} from '../interfaces/api/IPairOfIndices.interface';
-import {IPolygon} from '../interfaces/api/IPolygon.interface';
 
 
 
@@ -56,7 +54,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
     private spheres: THREE.Object3D[] = [];
     private defaultSpheres: THREE.Object3D[] = [];
 
-
     public draggablePointIndex: number = -1;
     public isDragging = false;
 
@@ -89,15 +86,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
             this.createSpheres();
             if (DefaultPoints) this.setDefaultPoints(DefaultPoints);
         });
-
-
-
-        // this.initializeMaterial();
-        // this.initializeGeometry();
-        // this.createSpheres();
-        // if(DefaultPoints) this.setDefaultPoints(DefaultPoints)
-
-
     }
 
 
@@ -141,9 +129,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
         });
     }
 
-
-
-
     setDefaultPoints(newDefaultPoints: IPoint[]){
         this.apiData.defaultComplexPoints = newDefaultPoints;
         this.setNewCalculatedPoints();
@@ -161,7 +146,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
                 );
             }
         });
-
 
         const positionAttribute = this.geometry.getAttribute('position') as THREE.BufferAttribute;
         const linePositionAttribute = this.lineGeometry.getAttribute('position') as THREE.BufferAttribute;
@@ -315,7 +299,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
     }
 
 
-
     private addDragControls() {
         this.initializeDragControls()
 
@@ -364,33 +347,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
         this.apiData.defaultComplexPoints![this.draggablePointIndex].z = sphere.position.z;
 
         this.setNewCalculatedPoints();
-
-        /*const newPoints = this.Calculate();
-
-        this.spheres.forEach((sphere, index) => {
-            if (sphere instanceof THREE.Mesh) {
-                sphere.position.set(
-                    newPoints![index].x,
-                    newPoints![index].y,
-                    newPoints![index].z
-                );
-            }
-        });
-
-        const positionAttribute = this.geometry.getAttribute('position') as THREE.BufferAttribute;
-        const linePositionAttribute = this.lineGeometry.getAttribute('position') as THREE.BufferAttribute;
-
-        newPoints.forEach((point, index) => {
-            positionAttribute.setXYZ(index, point.x, point.y, point.z);
-            linePositionAttribute.setXYZ(index, point.x, point.y, point.z);
-        });
-
-        positionAttribute.needsUpdate = true;
-        linePositionAttribute.needsUpdate = true;
-
-        this.geometry.computeBoundingBox();
-        this.geometry.computeBoundingSphere();
-        this.geometry.computeVertexNormals();*/
     }
 
     private handleDragEnd(event: { object: THREE.Object3D } & THREE.Event<"dragend", DragControls>): void {
@@ -411,6 +367,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
         }
     }
 
+
     private handleMouseup() {
         if (this.isDragging) {
             this.isDragging = false;
@@ -424,7 +381,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
         let points: IPoint[] = this.apiData.points!
 
         for (let j = 0; j < points.length; j++) {
-
             let Xk = 0
             let Yk = 0
             let Zk = 0
@@ -445,7 +401,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
             newPoints.push(
                 {x: Xk, y: Yk, z: Zk, globalId: points[j].globalId, localIds: points[j].localIds}
             )
-
         }
         return newPoints
     }
@@ -496,7 +451,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
         }
     }
 
-
     public updatePolygonColors(newColor: THREE.Color) {
         const colors = this.geometry.attributes['color'].array;
         for (let i = 0; i < colors.length; i += 3) {
@@ -525,7 +479,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
         else
             this.material.dispose();
 
-
         this.children.forEach(child => {
             if (child instanceof THREE.Mesh || child instanceof THREE.LineSegments) {
                 child.geometry.dispose();
@@ -538,5 +491,3 @@ export class SuperGeometryMesh extends THREE.Mesh {
         });
     }
 }
-
-
