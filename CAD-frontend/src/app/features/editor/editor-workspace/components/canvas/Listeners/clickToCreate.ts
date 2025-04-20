@@ -13,7 +13,8 @@ export function clickToCreate( this: CanvasComponent, event: MouseEvent, {
 
     setMouse(event);
     this.raycaster.setFromCamera(this.mouse, this.camera);
-    const intersects = this.raycaster.intersectObjects(this.pickableObjects, false);
+    const pickableObjects = this.objectManager.getPickableObjects();
+    const intersects = this.raycaster.intersectObjects(pickableObjects, false);
 
     if (intersects.length === 0)
         createMesh();

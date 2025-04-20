@@ -2,109 +2,193 @@ import * as THREE from 'three';
 import { DragControls } from 'three/examples/jsm/controls/DragControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-// Interfaces
 import { IAPIData } from '../interfaces/api/IAPIData.interface';
 import { IPoint } from '../interfaces/api/IPoint.interface';
 import { IPosition } from '../interfaces/three-js/IPosition.interface';
-import { SuperGeometryMeshOptions } from './interfaces/ISuperGeometryMeshOptions.interface';
+import {IMeshColors} from './interfaces/IMeshColors.interface';
+import {IMaterialOptions} from './interfaces/IMaterialOptions';
 
-// Services
 import { ApiService } from '../services/api/api.service';
 import { GlobalVariablesService } from '../services/three-js/global-variables.service';
 
-// Utilities
 import { createDraggableSphere } from './utils/createDraggableSphere';
 import { createDefaultSphere } from './utils/createDefaultSphere';
-import {IMeshColors} from './interfaces/IMeshColors.interface';
 import {DEFAULT_POINTS} from './DefaultPoints';
+import {IDivisionConfig} from '../interfaces/api/IDivisionConfig';
+import {forkJoin, Subject} from 'rxjs';
+import {IPairOfIndices} from '../interfaces/api/IPairOfIndices.interface';
+import {IPolygon} from '../interfaces/api/IPolygon.interface';
 
 
 
 export class SuperGeometryMesh extends THREE.Mesh {
+    static ID = 0;
 
-    static ID: number = 0;
+    private readonly meshColors: IMeshColors = {
+        defaultMeshColor: new THREE.Color('#5a8be2'),
+        hoverMeshColor: new THREE.Color('rgba(0,89,255)'),  //rgba(0,89,255,0.61)
+        activeMeshColor: new THREE.Color('rgba(255,4,4)'),  //rgba(255,4,4,0.7)
+        wireframeColor: new THREE.Color(0xbfc2c7),
+        defaultSphereColor: new THREE.Color(0xbfc2c7),
+        draggableSphereColor: new THREE.Color('rgba(255,4,4)'),
+    }
 
-    scene!: THREE.Scene;
-    camera!: THREE.PerspectiveCamera;
-    renderer!: THREE.WebGLRenderer;
-    orbitControls!: OrbitControls;
+    readonly materialOptions: IMaterialOptions = {
+        wireframeOpacity: 0.2,
+        mehsOpacity: 0.1,
+        wireframe: false,
+        depthWrite: false,
+        depthTest: true
+    }
 
-    public divisionOptions: { x: number, y: number, z: number } = { x: 1, y: 1, z: 1 }
+    public scene!: THREE.Scene;
+    public camera!: THREE.PerspectiveCamera;
+    public renderer!: THREE.WebGLRenderer;
+    public orbitControls!: OrbitControls;
+    public dragControls!: DragControls;
+
+    public lineSegments!: THREE.LineSegments;
+    public lineMaterial!: THREE.LineBasicMaterial;
+    public lineGeometry!: THREE.BufferGeometry;
 
     apiData!: IAPIData;
 
-    // Owns 20 points that can be changed while dragging.
-    // Their positions affect the calculations of
-    // the positions of all other points.
-    defaultPoints: IPoint[] = []
-
-    spheres: THREE.Object3D[] = [];
-    dragableSpheres: THREE.Object3D[] = [];
-
-    draggablePointIndex: number = -1;
-
-    dragControls!: DragControls;
+    private spheres: THREE.Object3D[] = [];
+    private defaultSpheres: THREE.Object3D[] = [];
 
 
-    meshOptions: SuperGeometryMeshOptions = {
-        colors: {
-            defaultMeshColor: new THREE.Color('#5a8be2'),
-            hoverMeshColor: new THREE.Color('rgba(0,89,255,0.61)'),
-            activeMeshColor: new THREE.Color('rgba(255,4,4,0.7)'),
-            wireframeColor: new THREE.Color(0xbfc2c7),
-            defaultSphereColor: new THREE.Color(0xbfc2c7),
-            draggableSphereColor: new THREE.Color('rgba(255,4,4)')
-        } as IMeshColors,
+    public draggablePointIndex: number = -1;
+    public isDragging = false;
 
-        wireframeOpacity: 0.2,
-        mehsOpacity: 0.1,
-        //mehsOpacity: 1,
-        wireframe: false,
-        depthWrite: false,
-        depthTest: true,
-    } as SuperGeometryMeshOptions
+    private apiDataLoaded$ = new Subject<void>();
 
-
-    public lineSegments!: THREE.LineSegments
-    public lineMaterial!: THREE.LineBasicMaterial;
-    public lineGeometry!: THREE.BufferGeometry;
 
 
     constructor(
         private apiService: ApiService,
         private globalVariablesService: GlobalVariablesService,
-        private outerDragControls: DragControls)
+        private outerDragControls: DragControls,
+        private divisionConfig: IDivisionConfig,
+        DefaultPoints?: IPoint[]
+    )
     {
         super(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial());
+
+        SuperGeometryMesh.ID++;
 
         this.scene = this.globalVariablesService.get('scene') as THREE.Scene;
         this.camera = this.globalVariablesService.get('camera') as THREE.PerspectiveCamera;
         this.renderer = this.globalVariablesService.get('renderer') as THREE.WebGLRenderer;
         this.orbitControls = this.globalVariablesService.get('orbitControls') as OrbitControls;
+
+        this.initializeApiData();
+
+        this.apiDataLoaded$.subscribe(() => {
+            this.initializeMaterial();
+            this.initializeGeometry();
+            this.createSpheres();
+            if (DefaultPoints) this.setDefaultPoints(DefaultPoints);
+        });
+
+
+
+        // this.initializeMaterial();
+        // this.initializeGeometry();
+        // this.createSpheres();
+        // if(DefaultPoints) this.setDefaultPoints(DefaultPoints)
+
+
     }
 
 
-    async createMesh(apiData: IAPIData): Promise<void> {
-        SuperGeometryMesh.ID++;
+    private initializeApiData(): void {
+        this.apiService.Divide(this.divisionConfig).subscribe({
+            next: () => {
+                forkJoin({
+                    points: this.apiService.Points(),
+                    pairsOfIndices: this.apiService.PairsOfIndices(),
+                    polygons: this.apiService.Polygons(),
+                    defaultComplexPoints: this.apiService.DefaultPoints(),
+                }).subscribe({
+                    next: (apiData: IAPIData) => {
+                        let defaultPoints = apiData.defaultComplexPoints!;
 
-        this.apiData = apiData;
-        await this.loadDefaultPoints();
+                        const hasInvalidPoints = defaultPoints.some(point => point.localIds.length > 1);
+                        if (hasInvalidPoints) {
+                            console.error('Invalid points detected');
+                            return;
+                        }
 
-        this.initializeMaterial();
-        this.initializeGeometry();
-        this.createSpheres();
+                        defaultPoints.sort((a, b) => a.localIds[0] - b.localIds[0]);
 
-        //console.log("----------",this.defaultPoints);
+                        this.apiData = {
+                            points: apiData.points!,
+                            pairsOfIndices: apiData.pairsOfIndices!,
+                            polygons: apiData.polygons!,
+                            defaultComplexPoints: defaultPoints
+                        };
+
+                        this.apiDataLoaded$.next();
+                    },
+                    error: (error) => {
+                        console.error('Error loading API data:', error);
+                    }
+                });
+            },
+            error: (error) => {
+                console.error('Error during division:', error);
+            }
+        });
     }
 
-    private initializeMaterial(): void {
+
+
+
+    setDefaultPoints(newDefaultPoints: IPoint[]){
+        this.apiData.defaultComplexPoints = newDefaultPoints;
+        this.setNewCalculatedPoints();
+    }
+
+    setNewCalculatedPoints(){
+        const newPoints = this.Calculate();
+
+        this.spheres.forEach((sphere, index) => {
+            if (sphere instanceof THREE.Mesh) {
+                sphere.position.set(
+                    newPoints![index].x,
+                    newPoints![index].y,
+                    newPoints![index].z
+                );
+            }
+        });
+
+
+        const positionAttribute = this.geometry.getAttribute('position') as THREE.BufferAttribute;
+        const linePositionAttribute = this.lineGeometry.getAttribute('position') as THREE.BufferAttribute;
+
+        newPoints.forEach((point, index) => {
+            positionAttribute.setXYZ(index, point.x, point.y, point.z);
+            linePositionAttribute.setXYZ(index, point.x, point.y, point.z);
+        });
+
+        positionAttribute.needsUpdate = true;
+        linePositionAttribute.needsUpdate = true;
+
+        this.geometry.computeBoundingBox();
+        this.geometry.computeBoundingSphere();
+        this.geometry.computeVertexNormals();
+    }
+
+
+
+    private initializeMaterial() {
         this.material = new THREE.MeshBasicMaterial({
             vertexColors: true,
-            wireframe: this.meshOptions.wireframe,
+            wireframe: this.materialOptions.wireframe,
             transparent: true,
-            opacity: this.meshOptions.mehsOpacity,
-            depthWrite: this.meshOptions.depthWrite,
-            depthTest: this.meshOptions.depthTest,
+            opacity: this.materialOptions.mehsOpacity,
+            depthWrite: this.materialOptions.depthWrite,
+            depthTest: this.materialOptions.depthTest,
             side: THREE.DoubleSide,
         });
     }
@@ -124,6 +208,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
         this.initializeLineSegments()
     }
 
+
     private extractVertices(): number[] {
         return this.apiData.points!.flatMap((point) => [point.x, point.y, point.z]);
     }
@@ -134,18 +219,12 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
     private generateColors(): number[] {
         return this.apiData.polygons!.flatMap(() => {
-            const color = this.meshOptions.colors.defaultMeshColor;
+            const color = this.meshColors.defaultMeshColor;
             return [color.r, color.g, color.b, color.r, color.g, color.b, color.r, color.g, color.b];
         });
     }
 
-
     private initializeLineSegments(): void {
-        this.lineMaterial = new THREE.LineBasicMaterial({
-            color: new THREE.Color('#fff'),
-        });
-
-
         const lineGeometry = new THREE.BufferGeometry();
 
         const vertices: number[] = this.apiData.points!.flatMap((point) => [point.x, point.y, point.z]);
@@ -155,35 +234,50 @@ export class SuperGeometryMesh extends THREE.Mesh {
         lineGeometry.setIndex(indices);
         lineGeometry.computeVertexNormals();
 
+        this.lineMaterial = new THREE.LineBasicMaterial({ color: new THREE.Color('#fff')});
         this.lineGeometry = lineGeometry;
 
-
-        this.lineSegments = new THREE.LineSegments(lineGeometry, this.lineMaterial);
+        this.lineSegments = new THREE.LineSegments(this.lineGeometry, this.lineMaterial);
         this.add(this.lineSegments);
     }
 
 
-    async loadDefaultPoints(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            this.apiService.DefaultPoints().subscribe({
-                next: (defaultPoints) => {
-                    this.defaultPoints = defaultPoints;
-                    this.defaultPoints.forEach((point) => {if (point.localIds.length > 1) reject()})
-                    this.defaultPoints.sort((a, b) => a.localIds[0] - b.localIds[0]);
-                    resolve();
-                },
-                error: (err) => {
-                    console.error('Сталася помилка в SuperGeometryMesh -> defaultPoints:', err);
-                    reject(err);
-                },
-            });
+    private ensureOutwardNormals(polygonIndices: number[]): number[] {
+        const correctedIndices: number[] = [];
+
+        const centroid = new THREE.Vector3();
+        this.apiData.points!.forEach((point) => {
+            centroid.add(new THREE.Vector3(point.x, point.y, point.z));
         });
+        centroid.divideScalar(this.apiData.points!.length);
+
+        for (let i = 0; i < polygonIndices.length; i += 3) {
+            const idx1 = polygonIndices[i];
+            const idx2 = polygonIndices[i + 1];
+            const idx3 = polygonIndices[i + 2];
+
+            const p1 = new THREE.Vector3(this.apiData.points![idx1].x, this.apiData.points![idx1].y, this.apiData.points![idx1].z);
+            const p2 = new THREE.Vector3(this.apiData.points![idx2].x, this.apiData.points![idx2].y, this.apiData.points![idx2].z);
+            const p3 = new THREE.Vector3(this.apiData.points![idx3].x, this.apiData.points![idx3].y, this.apiData.points![idx3].z);
+
+            const normal = new THREE.Vector3().crossVectors(
+                new THREE.Vector3().subVectors(p2, p1),
+                new THREE.Vector3().subVectors(p3, p1)
+            ).normalize();
+
+            const toCentroid = new THREE.Vector3().subVectors(p1, centroid);
+            if (normal.dot(toCentroid) < 0)
+                correctedIndices.push(idx1, idx3, idx2);
+            else
+                correctedIndices.push(idx1, idx2, idx3);
+        }
+        return correctedIndices;
     }
 
     private createSpheres(): void {
 
         this.spheres = [];
-        this.dragableSpheres = [];
+        this.defaultSpheres = [];
 
         this.apiData.points!.forEach((point) => {
             const position: IPosition = { x: point.x, y: point.y, z: point.z };
@@ -198,13 +292,13 @@ export class SuperGeometryMesh extends THREE.Mesh {
             const sphere = pointExists
                 ? createDraggableSphere(
                     position,
-                    this.meshOptions.colors.draggableSphereColor,
+                    this.meshColors.draggableSphereColor,
                     point.globalId,
                     point.localIds
                 )
                 : createDefaultSphere(
                     position,
-                    this.meshOptions.colors.defaultSphereColor,
+                    this.meshColors.defaultSphereColor,
                     point.globalId,
                     point.localIds
                 );
@@ -212,140 +306,117 @@ export class SuperGeometryMesh extends THREE.Mesh {
             this.add(sphere);
             this.spheres.push(sphere);
 
-            if (pointExists) {
-                this.dragableSpheres.push(sphere);
-            }
+            if (pointExists)
+                this.defaultSpheres.push(sphere);
         });
 
-        if (this.dragableSpheres.length > 0) {
+        if (this.defaultSpheres.length > 0)
             this.addDragControls();
-        }
     }
 
-    private addDragControls(): void {
-        if (this.dragControls) {
-            this.dragControls.deactivate();
-            this.dragControls.dispose();
-        }
 
-        this.dragControls = new DragControls(
-            this.dragableSpheres,
-            this.camera,
-            this.renderer.domElement
+
+    private addDragControls() {
+        this.initializeDragControls()
+
+        this.dragControls.addEventListener('dragstart', (event) => {this.handleDragStart(event);});
+        this.dragControls.addEventListener('drag', (event) => {this.handleDrag(event);});
+        this.dragControls.addEventListener('dragend', (event) => {this.handleDragEnd(event);});
+        this.renderer.domElement.addEventListener('mouseup', () => {this.handleMouseup()})
+    }
+
+    private comparePositions(pos1: IPosition, pos2: IPosition, tolerance = 0.001) {
+        return Math.abs(pos1.x - pos2.x) < tolerance &&
+            Math.abs(pos1.y - pos2.y) < tolerance &&
+            Math.abs(pos1.z - pos2.z) < tolerance;
+    };
+
+    private handleDragStart(event: { object: THREE.Object3D } & THREE.Event<"dragstart", DragControls>): void {
+        if (!this.defaultSpheres.includes(event.object)) return;
+        this.isDragging = true;
+        this.orbitControls.enabled = false;
+        this.outerDragControls.enabled = false;
+
+        const sphere = event.object as THREE.Mesh;
+        sphere.scale.set(2, 2, 2);
+        (this as any).draggingSphere = sphere;
+
+        this.draggablePointIndex = this.apiData.defaultComplexPoints!.findIndex(
+            defaultPoint => this.comparePositions(
+                {x: defaultPoint.x, y: defaultPoint.y, z: defaultPoint.z},
+                sphere.position
+            )
         );
-        let isDragging = false;
+        if (this.draggablePointIndex === -1)
+            return;
+
+    }
+
+    private handleDrag(event: { object: THREE.Object3D } & THREE.Event<"drag", DragControls>): void {
+
+        if (!this.isDragging) return;
+        if ((this as any).draggingSphere !== event.object) return;
+        if (this.draggablePointIndex === -1) return;
+        const sphere = event.object as THREE.Mesh;
+
+        this.apiData.defaultComplexPoints![this.draggablePointIndex].x = sphere.position.x;
+        this.apiData.defaultComplexPoints![this.draggablePointIndex].y = sphere.position.y;
+        this.apiData.defaultComplexPoints![this.draggablePointIndex].z = sphere.position.z;
+
+        this.setNewCalculatedPoints();
+
+        /*const newPoints = this.Calculate();
+
+        this.spheres.forEach((sphere, index) => {
+            if (sphere instanceof THREE.Mesh) {
+                sphere.position.set(
+                    newPoints![index].x,
+                    newPoints![index].y,
+                    newPoints![index].z
+                );
+            }
+        });
 
         const positionAttribute = this.geometry.getAttribute('position') as THREE.BufferAttribute;
         const linePositionAttribute = this.lineGeometry.getAttribute('position') as THREE.BufferAttribute;
 
-
-        const comparePositions = (pos1: IPosition, pos2: IPosition, tolerance = 0.001) => {
-            return Math.abs(pos1.x - pos2.x) < tolerance &&
-                Math.abs(pos1.y - pos2.y) < tolerance &&
-                Math.abs(pos1.z - pos2.z) < tolerance;
-        };
-
-        this.dragControls.addEventListener('dragstart', (event) => {
-            isDragging = true;
-            this.orbitControls.enabled = false;
-
-            console.log("this.outerDragControls.enabled = false;")
-            if (this.outerDragControls) {
-                this.outerDragControls.enabled = false;
-            }
-
-            if (!this.dragableSpheres.includes(event.object)) return;
-            const sphere = event.object as THREE.Mesh;
-            sphere.scale.set(2, 2, 2);
-
-            (this as any).draggingSphere = sphere;
-
-            this.draggablePointIndex = this.defaultPoints.findIndex(
-                defaultPoint => comparePositions(
-                    {x: defaultPoint.x, y: defaultPoint.y, z: defaultPoint.z},
-                    sphere.position
-                )
-            );
-
-            if (this.draggablePointIndex === -1) {
-                console.error('----------------');
-                return;
-            }
+        newPoints.forEach((point, index) => {
+            positionAttribute.setXYZ(index, point.x, point.y, point.z);
+            linePositionAttribute.setXYZ(index, point.x, point.y, point.z);
         });
 
-        this.dragControls.addEventListener('drag', (event) =>
-        {
-            if (!isDragging) return;
-            if ((this as any).draggingSphere !== event.object) return;
+        positionAttribute.needsUpdate = true;
+        linePositionAttribute.needsUpdate = true;
 
-            if (this.draggablePointIndex === -1) {
-                console.error('+++++++++++++++++');
-                return;
-            }
-
-            const sphere = event.object as THREE.Mesh;
-
-            this.defaultPoints[this.draggablePointIndex].x = sphere.position.x;
-            this.defaultPoints[this.draggablePointIndex].y = sphere.position.y;
-            this.defaultPoints[this.draggablePointIndex].z = sphere.position.z;
-
-            const newPoints = this.Calculate();
-
-            this.spheres.forEach((sphere, index) => {
-                if (sphere instanceof THREE.Mesh) {
-                    sphere.position.set(
-                        newPoints![index].x,
-                        newPoints![index].y,
-                        newPoints![index].z
-                    );
-                }
-            });
-
-            newPoints.forEach((point, index) => {
-                positionAttribute.setXYZ(index, point.x, point.y, point.z);
-                linePositionAttribute.setXYZ(index, point.x, point.y, point.z);
-            });
-
-            positionAttribute.needsUpdate = true;
-            linePositionAttribute.needsUpdate = true;
-
-            this.geometry.computeBoundingBox();
-            this.geometry.computeBoundingSphere();
-            this.geometry.computeVertexNormals();
-
-        });
-
-        this.dragControls.addEventListener('dragend', (event) => {
-            isDragging = false;
-
-            this.orbitControls.enabled = true;
-
-            if (this.outerDragControls)
-                this.outerDragControls.enabled = true;
-
-            if ((this as any).draggingSphere !== event.object) return;
-            const sphere = event.object as THREE.Mesh;
-            sphere.scale.set(1, 1, 1);
-            (this as any).draggingSphere = null;
-
-            let draggedObjectMesh = this as SuperGeometryMesh;
-
-            if (Array.isArray(draggedObjectMesh.material)) {
-                console.warn('Material is an array. Cannot set opacity on an array of materials.');
-            } else {
-                draggedObjectMesh.material.transparent = true;
-                draggedObjectMesh.material.opacity = 0.2;
-            }
-        });
-
-        this.renderer.domElement.addEventListener('mouseup', () => {
-            if (isDragging) {
-                isDragging = false;
-                this.orbitControls.enabled = true;
-            }
-        });
+        this.geometry.computeBoundingBox();
+        this.geometry.computeBoundingSphere();
+        this.geometry.computeVertexNormals();*/
     }
 
+    private handleDragEnd(event: { object: THREE.Object3D } & THREE.Event<"dragend", DragControls>): void {
+        this.isDragging = false;
+        this.orbitControls.enabled = true;
+        this.outerDragControls.enabled = true;
+        if ((this as any).draggingSphere !== event.object) return;
+
+        const sphere = event.object as THREE.Mesh;
+        sphere.scale.set(1, 1, 1);
+        (this as any).draggingSphere = null;
+
+
+        let draggedObjectMesh = this as SuperGeometryMesh;
+        if (!Array.isArray(draggedObjectMesh.material)) {
+            draggedObjectMesh.material.transparent = true;
+            draggedObjectMesh.material.opacity = 0.2;
+        }
+    }
+
+    private handleMouseup() {
+        if (this.isDragging) {
+            this.isDragging = false;
+            this.orbitControls.enabled = true;
+        }
+    }
 
 
     Calculate(): IPoint[]{
@@ -366,9 +437,9 @@ export class SuperGeometryMesh extends THREE.Mesh {
                     points[j].y,
                     points[j].z)
 
-                Xk += this.defaultPoints[i].x * fi
-                Yk += this.defaultPoints[i].y * fi
-                Zk += this.defaultPoints[i].z * fi
+                Xk += this.apiData.defaultComplexPoints![i].x * fi
+                Yk += this.apiData.defaultComplexPoints![i].y * fi
+                Zk += this.apiData.defaultComplexPoints![i].z * fi
             }
 
             newPoints.push(
@@ -405,40 +476,26 @@ export class SuperGeometryMesh extends THREE.Mesh {
     }
 
 
+    private initializeDragControls(){
 
-    private ensureOutwardNormals(polygonIndices: number[]): number[] {
-        const correctedIndices: number[] = [];
+        this.disposeDragControls();
 
-        const centroid = new THREE.Vector3();
-        this.apiData.points!.forEach((point) => {
-            centroid.add(new THREE.Vector3(point.x, point.y, point.z));
-        });
-        centroid.divideScalar(this.apiData.points!.length);
+        this.dragControls = new DragControls(
+            this.defaultSpheres,
+            this.camera,
+            this.renderer.domElement
+        );
 
-        for (let i = 0; i < polygonIndices.length; i += 3) {
-            const idx1 = polygonIndices[i];
-            const idx2 = polygonIndices[i + 1];
-            const idx3 = polygonIndices[i + 2];
-
-            const p1 = new THREE.Vector3(this.apiData.points![idx1].x, this.apiData.points![idx1].y, this.apiData.points![idx1].z);
-            const p2 = new THREE.Vector3(this.apiData.points![idx2].x, this.apiData.points![idx2].y, this.apiData.points![idx2].z);
-            const p3 = new THREE.Vector3(this.apiData.points![idx3].x, this.apiData.points![idx3].y, this.apiData.points![idx3].z);
-
-            const normal = new THREE.Vector3().crossVectors(
-                new THREE.Vector3().subVectors(p2, p1),
-                new THREE.Vector3().subVectors(p3, p1)
-            ).normalize();
-
-            const toCentroid = new THREE.Vector3().subVectors(p1, centroid);
-            if (normal.dot(toCentroid) < 0) {
-                correctedIndices.push(idx1, idx3, idx2);
-            } else {
-                correctedIndices.push(idx1, idx2, idx3);
-            }
-        }
-
-        return correctedIndices;
+        this.isDragging = false;
     }
+
+    private disposeDragControls() {
+        if (this.dragControls) {
+            this.dragControls.deactivate();
+            this.dragControls.dispose();
+        }
+    }
+
 
     public updatePolygonColors(newColor: THREE.Color) {
         const colors = this.geometry.attributes['color'].array;
@@ -448,12 +505,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
             colors[i + 2] = newColor.b;
         }
         this.geometry.attributes['color'].needsUpdate = true;
-    }
-
-    public changeDivisionOptions(x: number, y: number, z: number): void {
-        this.divisionOptions.x = x;
-        this.divisionOptions.y = y;
-        this.divisionOptions.z = z;
     }
 
 
@@ -487,3 +538,5 @@ export class SuperGeometryMesh extends THREE.Mesh {
         });
     }
 }
+
+

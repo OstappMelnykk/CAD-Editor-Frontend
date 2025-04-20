@@ -10,6 +10,7 @@ import { IAPIData } from '../../../../../../core/interfaces/api/IAPIData.interfa
 import { ApiService } from '../../../../../../core/services/api/api.service';
 import { DivisionEventService } from '../../../../../../core/services/state/division-event.service';
 import { GlobalVariablesService } from '../../../../../../core/services/three-js/global-variables.service';
+import {IDivisionConfig} from '../../../../../../core/interfaces/api/IDivisionConfig';
 
 
 @Component({
@@ -73,7 +74,9 @@ export class DivisionComponent {
              z: this.myForm.value.z,
         }
 
-        this.apiService.Divide(divisionRequest).subscribe({
+        this.divisionEvent.DivisionOccurs(divisionRequest as IDivisionConfig);
+
+       /* this.apiService.Divide(divisionRequest).subscribe({
             next: () => {
                 forkJoin({
                     points: this.apiService.Points(),
@@ -87,6 +90,6 @@ export class DivisionComponent {
             error: (err) => {
                 console.error('Error while execution Divide:', err);
             }
-        });
+        });*/
     }
 }

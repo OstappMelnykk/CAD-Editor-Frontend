@@ -12,7 +12,9 @@ export function mousedownToChoose(this: CanvasComponent,
     setMouse(event);
 
     this.raycaster.setFromCamera(this.mouse, this.camera);
-    const intersects = this.raycaster.intersectObjects(this.pickableObjects, false);
+    const pickableObjects = this.objectManager.getPickableObjects();
+    const intersects = this.raycaster.intersectObjects(pickableObjects, false);
+
 
     const activeMesh: SuperGeometryMesh | null = this.activeObject ?? null;
 

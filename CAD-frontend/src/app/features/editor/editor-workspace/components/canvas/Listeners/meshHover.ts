@@ -10,7 +10,9 @@ export function meshHover(this: CanvasComponent,
 
     setMouse(event);
     this.raycaster.setFromCamera(this.mouse, this.camera);
-    const intersects = this.raycaster.intersectObjects(this.pickableObjects, false);
+    const pickableObjects = this.objectManager.getPickableObjects();
+    const intersects = this.raycaster.intersectObjects(pickableObjects, false);
+
 
     if (this.hoveredObject &&
         this.hoveredObject !== this.activeObject &&
@@ -29,8 +31,10 @@ export function meshHover(this: CanvasComponent,
 
 
 
+
         const intersectedPoint = intersects[0].point; // Точка перетину (x, y, z)
-        return intersectedPoint
+        return intersects[0].point;
+
     }
     else
     {
