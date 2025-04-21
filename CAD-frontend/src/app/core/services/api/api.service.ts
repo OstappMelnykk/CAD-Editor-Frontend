@@ -15,7 +15,6 @@ import {Observable} from 'rxjs';
 })
 export class ApiService {
 
-
     private apiUrl = `${environment.apiBaseUrl}`;
 
     constructor(private http: HttpClient) {}
@@ -28,6 +27,13 @@ export class ApiService {
         return this.http.get<IPoint[]>(this.apiUrl + '/GetComplexPoints')
     }
 
+    NegativeFace_X_Points(): Observable<number[]>{return this.http.get<number[]>(this.apiUrl + '/GetNegativeFacePoints_X_as(GlobalIDs-1)')}
+    NegativeFace_Y_Points(): Observable<number[]>{return this.http.get<number[]>(this.apiUrl + '/GetNegativeFacePoints_Y_as(GlobalIDs-1)')}
+    NegativeFace_Z_Points(): Observable<number[]>{return this.http.get<number[]>(this.apiUrl + '/GetNegativeFacePoints_Z_as(GlobalIDs-1)')}
+    PositiveFace_X_Points(): Observable<number[]>{return this.http.get<number[]>(this.apiUrl + '/GetPositiveFacePoints_X_as(GlobalIDs-1)')}
+    PositiveFace_Y_Points(): Observable<number[]>{return this.http.get<number[]>(this.apiUrl + '/GetPositiveFacePoints_Y_as(GlobalIDs-1)')}
+    PositiveFace_Z_Points(): Observable<number[]>{return this.http.get<number[]>(this.apiUrl + '/GetPositiveFacePoints_Z_as(GlobalIDs-1)')}
+
     PairsOfIndices(): Observable<IPairOfIndices[]>{
         return this.http.get<IPairOfIndices[]>(this.apiUrl + '/GetPairsOfIndices')
     }
@@ -39,5 +45,4 @@ export class ApiService {
     DefaultPoints(): Observable<IPoint[]>{
         return this.http.get<IPoint[]>(this.apiUrl + '/Get_20_DefaultComplexPoints')
     }
-
 }
