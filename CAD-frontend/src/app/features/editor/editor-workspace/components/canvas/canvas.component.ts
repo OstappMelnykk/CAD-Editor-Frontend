@@ -8,7 +8,7 @@ import {CanvasResizeService} from '../../../../../core/services/three-js/canvas-
 import {CameraEventService} from '../../../../../core/services/state/camera-event.service';
 import {ApiService} from '../../../../../core/services/api/api.service';
 import {DivisionEventService} from '../../../../../core/services/state/division-event.service';
-import {SuperGeometryMesh} from '../../../../../core/threejsMeshes/SuperGeometryMesh';
+import {FacePointType, SuperGeometryMesh} from '../../../../../core/threejsMeshes/SuperGeometryMesh';
 import {clickToCreate} from './Listeners/clickToCreate';
 import {mousedownToChoose} from './Listeners/mousedownToChoose';
 import {meshHover} from './Listeners/meshHover';
@@ -17,6 +17,7 @@ import {IPoint} from '../../../../../core/interfaces/api/IPoint.interface';
 import {ICameraPosition} from '../../../../../core/interfaces/three-js/ICameraPosition.interface';
 import {IDivisionConfig} from '../../../../../core/interfaces/api/IDivisionConfig';
 import {ObjectManager} from './ObjectManager';
+import {ColorsEventService} from '../../../../../core/services/state/colors-event.service';
 
 @Component({
     selector: 'app-canvas',
@@ -32,6 +33,7 @@ export class CanvasComponent implements OnInit {
     cameraEventService = inject(CameraEventService);
     apiService = inject(ApiService);
     divisionEvent = inject(DivisionEventService);
+    colorsEvent = inject(ColorsEventService);
 
     canvas!: HTMLCanvasElement;
     scene!: THREE.Scene;
@@ -99,6 +101,43 @@ export class CanvasComponent implements OnInit {
         this.divisionEvent.divisionEvent$.subscribe((divisionConfig) => {
             this.onDivisionOcures(divisionConfig);
         })
+
+
+        this.colorsEvent.defaultMeshColorEvent$.subscribe((color) => {
+            if(this.activeObject){
+                this.activeObject.meshColors.defaultMeshColor = new THREE.Color(color);
+            }
+        })
+        this.colorsEvent.hoverMeshColorEvent$.subscribe((color) => {
+            if(this.activeObject){
+                this.activeObject.meshColors.hoverMeshColor = new THREE.Color(color);
+            }
+        })
+        this.colorsEvent.activeMeshColorEvent$.subscribe((color) => {
+            if(this.activeObject){
+                this.activeObject.meshColors.activeMeshColor = new THREE.Color(color);
+            }
+        })
+        this.colorsEvent.wireframeColorEvent$.subscribe((color) => {
+            if(this.activeObject){
+                this.activeObject.meshColors.wireframeColor = new THREE.Color(color);
+            }
+        })
+        this.colorsEvent.defaultSphereColorEvent$.subscribe((color) => {
+            if(this.activeObject){
+                this.activeObject.meshColors.defaultSphereColor = new THREE.Color(color);
+            }
+        })
+        this.colorsEvent.draggableSphereColorEvent$.subscribe((color) => {
+            if(this.activeObject){
+                this.activeObject.meshColors.draggableSphereColor = new THREE.Color(color);
+            }
+        })
+        this.colorsEvent.meshOpacityEvent$.subscribe((opacity)=>{
+            if(this.activeObject){
+                this.activeObject.materialOptions.mehsOpacity = opacity;
+            }
+        })
     }
 
 
@@ -117,7 +156,14 @@ export class CanvasComponent implements OnInit {
             }
         }
     }
-    private handleDrag(event: { object: THREE.Object3D } & THREE.Event<"drag", DragControls>): void {}
+    private handleDrag(event: { object: THREE.Object3D } & THREE.Event<"drag", DragControls>): void {
+        const draggedObject = event.object as THREE.Group;
+        if (draggedObject.children.length === 1) {
+            const draggedObjectMesh = draggedObject.children[0] as SuperGeometryMesh;
+            draggedObjectMesh.updateAverageCoordinates();
+        }
+
+    }
 
     private handleDragEnd(event: { object: THREE.Object3D } & THREE.Event<"dragend", DragControls>): void
     {
@@ -165,6 +211,7 @@ export class CanvasComponent implements OnInit {
         const result = meshHover.call(this, event, { setMouse: this.setMouse.bind(this) })
         if (!result) {
             this.scene.remove(this.arrowHelper);
+            this.scene.remove(this.PointVisualisation);
             return;
         }
         else{
@@ -176,7 +223,33 @@ export class CanvasComponent implements OnInit {
             this.PointVisualisation.position.copy(this.hoveredPoint);
             this.scene.add(this.PointVisualisation);
 
-            //напиши тут знаходження середньої координати для кожної грані, якщо в словнику
+
+            let arr = new Array<number>();
+            const hoveredObjectMesh = this.hoveredObject as SuperGeometryMesh;
+            let minDistance = Infinity;
+            let closestSideIndex = -1;
+
+            hoveredObjectMesh.allSides.forEach((side, index) => {
+                const distance = this.hoveredPoint!.distanceTo(side.middlePoint);
+                arr.push(distance);
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestSideIndex = index;
+                }
+            });
+
+            if (closestSideIndex !== -1) {
+                const closestSide = hoveredObjectMesh.allSides[closestSideIndex];
+                //console.log("Найближча грань:", closestSide.facePointType);
+                if (closestSide.facePointType ===  FacePointType.NegativeFace_X_Points){console.log("-X")}
+                if (closestSide.facePointType ===  FacePointType.NegativeFace_Y_Points){console.log("-Y")}
+                if (closestSide.facePointType ===  FacePointType.NegativeFace_Z_Points){console.log("-Z")}
+                if (closestSide.facePointType ===  FacePointType.PositiveFace_X_Points){console.log("+X")}
+                if (closestSide.facePointType ===  FacePointType.PositiveFace_Y_Points){console.log("+Y")}
+                if (closestSide.facePointType ===  FacePointType.PositiveFace_Z_Points){console.log("+Z")}
+            }
+
         }
     }
 
