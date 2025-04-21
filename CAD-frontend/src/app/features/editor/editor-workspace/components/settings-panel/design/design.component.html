@@ -13,10 +13,10 @@
             id="defaultMeshColor"
             class="color-picker-input form__input form__input--defaultMeshColor"
             cpColorPicker
-            [(colorPicker)]="defaultMeshColor"
-            (colorPickerChange)="onColorChange('defaultMeshColor', $event)"
-            [style.background]="defaultMeshColor"
-            formControlName="defaultMeshColor"
+            [(colorPicker)]="settingsForm.value[settingsEnum.DefaultMeshColor]"
+            (colorPickerChange)="onColorChange(settingsEnum.DefaultMeshColor, $event)"
+            [style.background]="settingsForm.value[settingsEnum.DefaultMeshColor]"
+            formControlName="{{ settingsEnum.DefaultMeshColor }}"
             type="text"
         />
 
@@ -26,10 +26,10 @@
             id="hoverMeshColor"
             class="color-picker-input form__input form__input--hoverMeshColor"
             cpColorPicker
-            [(colorPicker)]="hoverMeshColor"
-            (colorPickerChange)="onColorChange('hoverMeshColor', $event)"
-            [style.background]="hoverMeshColor"
-            formControlName="hoverMeshColor"
+            [(colorPicker)]="settingsForm.value[settingsEnum.HoverMeshColor]"
+            (colorPickerChange)="onColorChange(settingsEnum.HoverMeshColor, $event)"
+            [style.background]="settingsForm.value[settingsEnum.HoverMeshColor]"
+            formControlName="{{ settingsEnum.HoverMeshColor }}"
             type="text"
         />
 
@@ -39,10 +39,10 @@
             id="activeMeshColor"
             class="color-picker-input form__input form__input--activeMeshColor"
             cpColorPicker
-            [(colorPicker)]="activeMeshColor"
-            (colorPickerChange)="onColorChange('activeMeshColor', $event)"
-            [style.background]="activeMeshColor"
-            formControlName="activeMeshColor"
+            [(colorPicker)]="settingsForm.value[settingsEnum.ActiveMeshColor]"
+            (colorPickerChange)="onColorChange(settingsEnum.ActiveMeshColor, $event)"
+            [style.background]="settingsForm.value[settingsEnum.ActiveMeshColor]"
+            formControlName="{{ settingsEnum.ActiveMeshColor }}"
             type="text"
         />
 
@@ -52,10 +52,10 @@
             id="wireframeColor"
             class="color-picker-input form__input form__input--wireframeColor"
             cpColorPicker
-            [(colorPicker)]="wireframeColor"
-            (colorPickerChange)="onColorChange('wireframeColor', $event)"
-            [style.background]="wireframeColor"
-            formControlName="wireframeColor"
+            [(colorPicker)]="settingsForm.value[settingsEnum.WireframeColor]"
+            (colorPickerChange)="onColorChange(settingsEnum.WireframeColor, $event)"
+            [style.background]="settingsForm.value[settingsEnum.WireframeColor]"
+            formControlName="{{ settingsEnum.WireframeColor }}"
             type="text"
         />
 
@@ -65,10 +65,10 @@
             id="defaultSphereColor"
             class="color-picker-input form__input form__input--defaultSphereColor"
             cpColorPicker
-            [(colorPicker)]="defaultSphereColor"
-            (colorPickerChange)="onColorChange('defaultSphereColor', $event)"
-            [style.background]="defaultSphereColor"
-            formControlName="defaultSphereColor"
+            [(colorPicker)]="settingsForm.value[settingsEnum.DefaultSphereColor]"
+            (colorPickerChange)="onColorChange(settingsEnum.DefaultSphereColor, $event)"
+            [style.background]="settingsForm.value[settingsEnum.DefaultSphereColor]"
+            formControlName="{{ settingsEnum.DefaultSphereColor }}"
             type="text"
         />
 
@@ -78,10 +78,10 @@
             id="draggableSphereColor"
             class="color-picker-input form__input form__input--draggableSphereColor"
             cpColorPicker
-            [(colorPicker)]="draggableSphereColor"
-            (colorPickerChange)="onColorChange('draggableSphereColor', $event)"
-            [style.background]="draggableSphereColor"
-            formControlName="draggableSphereColor"
+            [(colorPicker)]="settingsForm.value[settingsEnum.DraggableSphereColor]"
+            (colorPickerChange)="onColorChange(settingsEnum.DraggableSphereColor, $event)"
+            [style.background]="settingsForm.value[settingsEnum.DraggableSphereColor]"
+            formControlName="{{ settingsEnum.DraggableSphereColor }}"
             type="text"
         />
 
@@ -95,10 +95,11 @@
             min="0"
             max="1"
             step="0.01"
-            [value]="meshOpacity"
+            [value]="settingsForm.value[settingsEnum.MeshOpacity]"
             (input)="onOpacityChange($event)"
+
         />
-        <span>{{ meshOpacity }}</span>
+        <span>{{ settingsForm.value[settingsEnum.MeshOpacity] }}</span>
 
 
     </form>
