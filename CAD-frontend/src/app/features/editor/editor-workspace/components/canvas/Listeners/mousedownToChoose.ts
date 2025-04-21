@@ -1,5 +1,4 @@
 import {SuperGeometryMesh} from '../../../../../../core/threejsMeshes/SuperGeometryMesh';
-import {meshOptions} from '../../../../../../core/threejsMeshes/meshOptions';
 import {CanvasComponent} from '../canvas.component';
 
 export function mousedownToChoose(this: CanvasComponent,
@@ -20,7 +19,7 @@ export function mousedownToChoose(this: CanvasComponent,
 
     if (intersects.length === 0) {
         if (activeMesh) {
-            activeMesh.updatePolygonColors(meshOptions.colors.defaultMeshColor);
+            activeMesh.updatePolygonColors(activeMesh.meshColors.defaultMeshColor);
             this.activeObject = null;
         }
         return;
@@ -32,12 +31,12 @@ export function mousedownToChoose(this: CanvasComponent,
         const clickedMesh = clickedObject as SuperGeometryMesh;
 
         if (activeMesh && activeMesh !== clickedMesh)
-            activeMesh.updatePolygonColors(meshOptions.colors.defaultMeshColor);
+            activeMesh.updatePolygonColors(activeMesh.meshColors.defaultMeshColor);
 
         if (activeMesh === clickedMesh)
             clickedMesh.updatePolygonColors;
         else {
-            clickedMesh.updatePolygonColors(meshOptions.colors.activeMeshColor);
+            clickedMesh.updatePolygonColors(clickedMesh.meshColors.activeMeshColor);
             this.activeObject = clickedMesh;
         }
     }

@@ -17,7 +17,6 @@ import {IPoint} from '../../../../../core/interfaces/api/IPoint.interface';
 import {ICameraPosition} from '../../../../../core/interfaces/three-js/ICameraPosition.interface';
 import {IDivisionConfig} from '../../../../../core/interfaces/api/IDivisionConfig';
 import {ObjectManager} from './ObjectManager';
-import {meshOptions} from '../../../../../core/threejsMeshes/meshOptions';
 
 @Component({
     selector: 'app-canvas',
@@ -50,6 +49,8 @@ export class CanvasComponent implements OnInit {
     PointVisualisation: THREE.Object3D = new THREE.Mesh(new THREE.SphereGeometry(0.02, 32, 32), new THREE.MeshBasicMaterial({color: new THREE.Color('#00ff00')}));
     isRemoved: boolean = true;
 
+    arrowHelper = new THREE.ArrowHelper()
+
     objectManager!: ObjectManager;
 
     ngOnInit()
@@ -64,8 +65,6 @@ export class CanvasComponent implements OnInit {
         this.resizeListener()
         this.subscriptionHandler()
         this.initializeGlobalVariables();
-
-
 
         this.renderer.domElement.addEventListener('click', this.handleCanvasClick.bind(this));
         this.renderer.domElement.addEventListener('mousedown', this.handleCanvasMousedown.bind(this));
@@ -85,14 +84,11 @@ export class CanvasComponent implements OnInit {
         this.dragControls.transformGroup = true;
         this.dragControls.raycaster.params.Line.threshold = 0.01;
 
-        //this.objectManager = new ObjectManager(this.scene, this.dragControls);
-
         this.dragControls.addEventListener('dragstart', (event) => {this.handleDragStart(event);});
         this.dragControls.addEventListener('drag', (event) => {this.handleDrag(event);});
         this.dragControls.addEventListener('dragend', (event) => {this.handleDragEnd(event);});
 
-
-
+        this.arrowHelper.setLength(3)
     }
 
     subscriptionHandler(){
@@ -165,12 +161,22 @@ export class CanvasComponent implements OnInit {
     }
 
     private handleCanvasMousemove(event: MouseEvent): void {
-        this.hoveredPoint = meshHover.call(this, event, { setMouse: this.setMouse.bind(this) });
-        if (this.hoveredPoint === null || !this.isRemoved)
-            this.scene.remove(this.PointVisualisation);
+
+        const result = meshHover.call(this, event, { setMouse: this.setMouse.bind(this) })
+        if (!result) {
+            this.scene.remove(this.arrowHelper);
+            return;
+        }
         else{
+            this.hoveredPoint = result!.intersectedPoint;
+            const directionVector = result!.directionVector
+            this.arrowHelper.position.copy(this.hoveredPoint);
+            this.scene.add(this.arrowHelper);
+            this.arrowHelper.setDirection(directionVector);
             this.PointVisualisation.position.copy(this.hoveredPoint);
             this.scene.add(this.PointVisualisation);
+
+            //напиши тут знаходження середньої координати для кожної грані, якщо в словнику
         }
     }
 

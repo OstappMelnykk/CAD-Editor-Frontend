@@ -1,12 +1,11 @@
 import * as THREE from 'three';
 import {SuperGeometryMesh} from '../../../../../../core/threejsMeshes/SuperGeometryMesh';
-import {meshOptions} from '../../../../../../core/threejsMeshes/meshOptions';
 import {CanvasComponent} from '../canvas.component';
 
 export function meshHover(this: CanvasComponent,
                           event: MouseEvent,
                           {setMouse} : { setMouse: (event: MouseEvent) => void }
-):  THREE.Vector3 | null {
+):  {intersectedPoint: THREE.Vector3; directionVector: THREE.Vector3} | null {
 
     setMouse(event);
     this.raycaster.setFromCamera(this.mouse, this.camera);
@@ -25,7 +24,7 @@ export function meshHover(this: CanvasComponent,
         this.hoveredObject !== this.activeObject &&
         this.hoveredObject instanceof SuperGeometryMesh)
     {
-        this.hoveredObject.updatePolygonColors(meshOptions.colors.defaultMeshColor);
+        this.hoveredObject.updatePolygonColors(this.hoveredObject.meshColors.defaultMeshColor);
     }
 
     if (intersects.length > 0 &&
@@ -33,11 +32,14 @@ export function meshHover(this: CanvasComponent,
         intersects[0].object !== this.activeObject)
     {
         const mesh = intersects[0].object as SuperGeometryMesh;
-        mesh.updatePolygonColors(meshOptions.colors.hoverMeshColor);
+        mesh.updatePolygonColors(mesh.meshColors.hoverMeshColor);
         this.hoveredObject = mesh;
 
+        const directionVector = new THREE.Vector3()
+        directionVector.copy((intersects[0].face as THREE.Face).normal)
+
         const intersectedPoint = intersects[0].point; // Точка перетину (x, y, z)
-        return intersectedPoint;
+        return {intersectedPoint: intersectedPoint, directionVector: directionVector}
     }
     else
     {
