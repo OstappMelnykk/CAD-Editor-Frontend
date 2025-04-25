@@ -17,40 +17,8 @@ import {DEFAULT_POINTS} from './DefaultPoints';
 import {IDivisionConfig} from '../interfaces/api/IDivisionConfig';
 import {forkJoin, Observable, Subject} from 'rxjs';
 
-
-export enum FacePointType {
-    NegativeFace_X_Points = "NegativeFace_X_Points",
-    NegativeFace_Y_Points = "NegativeFace_Y_Points",
-    NegativeFace_Z_Points = "NegativeFace_Z_Points",
-    PositiveFace_X_Points = "PositiveFace_X_Points",
-    PositiveFace_Y_Points = "PositiveFace_Y_Points",
-    PositiveFace_Z_Points = "PositiveFace_Z_Points"
-}
-
-export interface SideData {
-    facePointType: FacePointType;
-    arrayIDs: number[];
-    middlePoint: THREE.Vector3;
-}
-
-export enum ConnectionType {
-    XAxis = 'X-Axis',
-    YAxis = 'Y-Axis',
-    ZAxis = 'Z-Axis',
-}
-
-
-export interface OppositeSideLink {
-    side1: SideData;
-    side2: SideData;
-    connectionType: ConnectionType;
-}
-
-
-
-
-
 export class SuperGeometryMesh extends THREE.Mesh {
+
     static ID = 0;
 
     public readonly meshColors: IMeshColors = {
@@ -62,7 +30,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
         defaultSphereColor: new THREE.Color(0xbfc2c7),
         draggableSphereColor: new THREE.Color('rgba(255,4,4)'),
     }
-
     public readonly materialOptions: IMaterialOptions = {
         wireframeOpacity: 0.2,
         mehsOpacity: 0.1,
@@ -81,23 +48,23 @@ export class SuperGeometryMesh extends THREE.Mesh {
     public lineMaterial!: THREE.LineBasicMaterial;
     public lineGeometry!: THREE.BufferGeometry;
 
-    apiData!: IAPIData;
+    public apiData!: IAPIData;
 
-    private spheres: THREE.Object3D[] = [];
-    private defaultSpheres: THREE.Object3D[] = [];
+    public spheres: THREE.Object3D[] = [];
+    public defaultSpheres: THREE.Object3D[] = [];
 
     public draggablePointIndex: number = -1;
     public isDragging = false;
 
     private apiDataLoaded$ = new Subject<void>();
 
-    allSides: SideData[] = []
+    allSidesData: SideData[] = []
     allSidesPoints: number[] = []
     AverageCoordinateMarkers: THREE.Object3D[] = []
 
 
-
-
+    static allMeshes: SuperGeometryMesh[] = [];
+    static allDefaultSpheres: THREE.Object3D[] = [];
 
     constructor(
         private apiService: ApiService,
@@ -110,6 +77,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
         super(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial());
 
         SuperGeometryMesh.ID++;
+        SuperGeometryMesh.allMeshes.push(this);
 
         this.scene = this.globalVariablesService.get('scene') as THREE.Scene;
         this.camera = this.globalVariablesService.get('camera') as THREE.PerspectiveCamera;
@@ -128,14 +96,12 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
             this.fetchPoints().subscribe({
                 next: (results) => {
-                    //console.log('Points:', results.Points);
-
-                    this.allSides.push({facePointType: FacePointType.NegativeFace_X_Points, arrayIDs: results.NegativeFace_X_Points, middlePoint:this.GetAverageCoordinate(results.NegativeFace_X_Points)})
-                    this.allSides.push({facePointType: FacePointType.NegativeFace_Y_Points, arrayIDs: results.NegativeFace_Y_Points, middlePoint:this.GetAverageCoordinate(results.NegativeFace_Y_Points)})
-                    this.allSides.push({facePointType: FacePointType.NegativeFace_Z_Points, arrayIDs: results.NegativeFace_Z_Points, middlePoint:this.GetAverageCoordinate(results.NegativeFace_Z_Points)})
-                    this.allSides.push({facePointType: FacePointType.PositiveFace_X_Points, arrayIDs: results.PositiveFace_X_Points, middlePoint:this.GetAverageCoordinate(results.PositiveFace_X_Points)})
-                    this.allSides.push({facePointType: FacePointType.PositiveFace_Y_Points, arrayIDs: results.PositiveFace_Y_Points, middlePoint:this.GetAverageCoordinate(results.PositiveFace_Y_Points)})
-                    this.allSides.push({facePointType: FacePointType.PositiveFace_Z_Points, arrayIDs: results.PositiveFace_Z_Points, middlePoint:this.GetAverageCoordinate(results.PositiveFace_Z_Points)})
+                    this.allSidesData.push({facePointType: FacePointType.NegativeFace_X_Points, arrayIDs: results.NegativeFace_X_Points, middlePoint:this.GetAverageCoordinate(results.NegativeFace_X_Points)})
+                    this.allSidesData.push({facePointType: FacePointType.NegativeFace_Y_Points, arrayIDs: results.NegativeFace_Y_Points, middlePoint:this.GetAverageCoordinate(results.NegativeFace_Y_Points)})
+                    this.allSidesData.push({facePointType: FacePointType.NegativeFace_Z_Points, arrayIDs: results.NegativeFace_Z_Points, middlePoint:this.GetAverageCoordinate(results.NegativeFace_Z_Points)})
+                    this.allSidesData.push({facePointType: FacePointType.PositiveFace_X_Points, arrayIDs: results.PositiveFace_X_Points, middlePoint:this.GetAverageCoordinate(results.PositiveFace_X_Points)})
+                    this.allSidesData.push({facePointType: FacePointType.PositiveFace_Y_Points, arrayIDs: results.PositiveFace_Y_Points, middlePoint:this.GetAverageCoordinate(results.PositiveFace_Y_Points)})
+                    this.allSidesData.push({facePointType: FacePointType.PositiveFace_Z_Points, arrayIDs: results.PositiveFace_Z_Points, middlePoint:this.GetAverageCoordinate(results.PositiveFace_Z_Points)})
 
                     this.allSidesPoints = [
                         ...results.NegativeFace_X_Points,
@@ -145,7 +111,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
                         ...results.PositiveFace_Y_Points,
                         ...results.PositiveFace_Z_Points,
                     ]
-                    console.log(this.AverageCoordinateMarkers)
                     this.setAverageCoordinateSpheres()
                 },
                 error: (err) => {
@@ -154,8 +119,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
             });
         });
     }
-
-
 
     GetAverageCoordinate(arrayIDs: number[]): THREE.Vector3 {
         const positionAttribute = this.geometry.getAttribute('position') as THREE.BufferAttribute;
@@ -176,9 +139,8 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
         return globalPoint;
     }
-
     setAverageCoordinateSpheres(){
-        this.allSides.forEach(side => {
+        this.allSidesData.forEach(side => {
             const sphere = new THREE.Mesh(
                 new THREE.SphereGeometry(0.1),
                 new THREE.MeshBasicMaterial({ color: 'white' })
@@ -190,19 +152,13 @@ export class SuperGeometryMesh extends THREE.Mesh {
             this.scene.add(sphere);
         })
     }
-
     updateAverageCoordinates(){
-        this.allSides.forEach(side => {side.middlePoint = this.GetAverageCoordinate(side.arrayIDs);})
-        this.updateAverageCoordinateSpheres()
-    }
-    updateAverageCoordinateSpheres(){
+        this.allSidesData.forEach(side => {side.middlePoint = this.GetAverageCoordinate(side.arrayIDs);})
         for (let i = 0; i < this.AverageCoordinateMarkers.length; i++)
-            this.AverageCoordinateMarkers[i].position.copy(this.allSides[i].middlePoint);
+            this.AverageCoordinateMarkers[i].position.copy(this.allSidesData[i].middlePoint);
     }
-
     fetchPoints(): Observable<any> {
         return forkJoin({
-            ///Points: this.Points(),
             NegativeFace_X_Points: this.NegativeFace_X_Points(),
             NegativeFace_Y_Points: this.NegativeFace_Y_Points(),
             NegativeFace_Z_Points: this.NegativeFace_Z_Points(),
@@ -211,35 +167,24 @@ export class SuperGeometryMesh extends THREE.Mesh {
             PositiveFace_Z_Points: this.PositiveFace_Z_Points()
         });
     }
-
-    Points(): Observable<IPoint[]> {
-        return this.apiService.Points();
-    }
-
     NegativeFace_X_Points(): Observable<number[]> {
         return this.apiService.NegativeFace_X_Points();
     }
-
     NegativeFace_Y_Points(): Observable<number[]> {
         return this.apiService.NegativeFace_Y_Points();
     }
-
     NegativeFace_Z_Points(): Observable<number[]> {
         return this.apiService.NegativeFace_Z_Points();
     }
-
     PositiveFace_X_Points(): Observable<number[]> {
         return this.apiService.PositiveFace_X_Points();
     }
-
     PositiveFace_Y_Points(): Observable<number[]> {
         return this.apiService.PositiveFace_Y_Points();
     }
-
     PositiveFace_Z_Points(): Observable<number[]> {
         return this.apiService.PositiveFace_Z_Points();
     }
-
     private initializeApiData(): void {
         this.apiService.Divide(this.divisionConfig).subscribe({
             next: () => {
@@ -279,12 +224,10 @@ export class SuperGeometryMesh extends THREE.Mesh {
             }
         });
     }
-
     setDefaultPoints(newDefaultPoints: IPoint[]){
         this.apiData.defaultComplexPoints = newDefaultPoints;
         this.setNewCalculatedPoints();
     }
-
     setNewCalculatedPoints(){
         const newPoints = this.Calculate();
 
@@ -313,7 +256,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
         this.geometry.computeBoundingSphere();
         this.geometry.computeVertexNormals();
     }
-
     private initializeMaterial() {
         this.material = new THREE.MeshBasicMaterial({
             vertexColors: true,
@@ -325,7 +267,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
             side: THREE.DoubleSide,
         });
     }
-
     private initializeGeometry(): void {
         this.geometry = new THREE.BufferGeometry();
 
@@ -340,22 +281,18 @@ export class SuperGeometryMesh extends THREE.Mesh {
         this.geometry.computeVertexNormals();
         this.initializeLineSegments()
     }
-
     private extractVertices(): number[] {
         return this.apiData.points!.flatMap((point) => [point.x, point.y, point.z]);
     }
-
     private extractIndices(): number[] {
         return this.ensureOutwardNormals(this.apiData.polygons!.flatMap((polygon) => [polygon.idx1, polygon.idx2, polygon.idx3]));
     }
-
     private generateColors(): number[] {
         return this.apiData.polygons!.flatMap(() => {
             const color = this.meshColors.defaultMeshColor;
             return [color.r, color.g, color.b, color.r, color.g, color.b, color.r, color.g, color.b];
         });
     }
-
     private initializeLineSegments(): void {
         const lineGeometry = new THREE.BufferGeometry();
 
@@ -372,7 +309,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
         this.lineSegments = new THREE.LineSegments(this.lineGeometry, this.lineMaterial);
         this.add(this.lineSegments);
     }
-
     private ensureOutwardNormals(polygonIndices: number[]): number[] {
         const correctedIndices: number[] = [];
 
@@ -404,7 +340,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
         }
         return correctedIndices;
     }
-
     private createSpheres(): void {
 
         this.spheres = [];
@@ -441,10 +376,12 @@ export class SuperGeometryMesh extends THREE.Mesh {
                 this.defaultSpheres.push(sphere);
         });
 
-        if (this.defaultSpheres.length > 0)
+        if (this.defaultSpheres.length > 0) {
+            SuperGeometryMesh.allDefaultSpheres.push(...this.defaultSpheres);
             this.addDragControls();
-    }
 
+        }
+    }
     private addDragControls() {
         this.initializeDragControls()
 
@@ -453,15 +390,17 @@ export class SuperGeometryMesh extends THREE.Mesh {
         this.dragControls.addEventListener('dragend', (event) => {this.handleDragEnd(event);});
         this.renderer.domElement.addEventListener('mouseup', () => {this.handleMouseup()})
     }
-
     private comparePositions(pos1: IPosition, pos2: IPosition, tolerance = 0.001) {
         return Math.abs(pos1.x - pos2.x) < tolerance &&
             Math.abs(pos1.y - pos2.y) < tolerance &&
             Math.abs(pos1.z - pos2.z) < tolerance;
     };
 
+
     private handleDragStart(event: { object: THREE.Object3D } & THREE.Event<"dragstart", DragControls>): void {
+
         if (!this.defaultSpheres.includes(event.object)) return;
+
         this.isDragging = true;
         this.orbitControls.enabled = false;
         this.outerDragControls.enabled = false;
@@ -480,30 +419,129 @@ export class SuperGeometryMesh extends THREE.Mesh {
             return;
     }
 
+  /*  shere__ : THREE.Mesh | undefined = undefined;*/
+
+
+
+
+    public GROUP_DISTANCE = 0.35;
+
+
+
+    updateSphereNeighbors(spheres: SphereWithNeighbors[]) {
+        for (const sphere of spheres) {
+
+            const spherePos = new THREE.Vector3();
+            sphere.getWorldPosition(spherePos);
+
+            sphere.userData.neighbors = [];
+
+            for (const other of spheres) {
+                if (sphere.uuid === other.uuid) continue;
+
+                const otherPos = new THREE.Vector3();
+                other.getWorldPosition(otherPos);
+
+                if (spherePos.distanceTo(otherPos) <= this.GROUP_DISTANCE) {
+                    sphere.userData.neighbors!.push(other.uuid);
+                }
+            }
+        }
+    }
+
+
+    static allGroups:SphereWithNeighbors[][] = []
+
+    findGroups(spheres: SphereWithNeighbors[]): SphereWithNeighbors[][] {
+        const visited = new Set<string>();
+        const groups: SphereWithNeighbors[][] = [];
+        SuperGeometryMesh.allGroups = []
+
+        for (const sphere of spheres) {
+            if (visited.has(sphere.uuid)) continue;
+
+            const group: SphereWithNeighbors[] = [];
+            const stack = [sphere];
+
+            while (stack.length > 0) {
+                const current = stack.pop()!;
+                if (visited.has(current.uuid)) continue;
+
+                visited.add(current.uuid);
+                group.push(current);
+
+                const neighbors = current.userData.neighbors || [];
+                for (const uuid of neighbors) {
+                    const neighbor = spheres.find(s => s.uuid === uuid);
+                    if (neighbor && !visited.has(neighbor.uuid)) {
+                        stack.push(neighbor);
+                    }
+                }
+            }
+
+            if (group.length >= 2) {
+                groups.push(group);
+            }
+
+
+            SuperGeometryMesh.allGroups.push(group);
+        }
+
+        return groups;
+    }
+
+    updateSphereColorsBasedOnGroups(spheres: SphereWithNeighbors[]) {
+        // Спочатку всі — білі
+        for (const sphere of spheres) {
+            if (sphere.material instanceof THREE.MeshBasicMaterial) {
+                sphere.material.color.set(0xff0404);
+            }
+        }
+
+        this.updateSphereNeighbors(spheres);
+        const groups = this.findGroups(spheres);
+
+        for (const group of groups) {
+            for (const sphere of group) {
+                if (sphere.material instanceof THREE.MeshBasicMaterial) {
+                    sphere.material.color.set(0xffff00);
+                }
+            }
+        }
+    }
+
+
+    private logGroups(groups: SphereWithNeighbors[][]): void {
+        const groupUuids = groups.map(group => group.map(s => s.uuid));
+        console.log("Групи UUID:", groupUuids);
+    }
+
     private handleDrag(event: { object: THREE.Object3D } & THREE.Event<"drag", DragControls>): void {
 
-        if (!this.isDragging) return;
-        //if ((this as any).draggingSphere !== event.object) return;
-        if (this.draggablePointIndex === -1) return;
-        const sphere = event.object as THREE.Mesh;
+        if (!this.isDragging || this.draggablePointIndex === -1) return;
+        const draggableSphere = event.object as THREE.Mesh;
+        //console.log(draggableSphere.uuid)
 
-        this.apiData.defaultComplexPoints![this.draggablePointIndex].x = sphere.position.x;
-        this.apiData.defaultComplexPoints![this.draggablePointIndex].y = sphere.position.y;
-        this.apiData.defaultComplexPoints![this.draggablePointIndex].z = sphere.position.z;
+        this.apiData.defaultComplexPoints![this.draggablePointIndex].x = draggableSphere.position.x;
+        this.apiData.defaultComplexPoints![this.draggablePointIndex].y = draggableSphere.position.y;
+        this.apiData.defaultComplexPoints![this.draggablePointIndex].z = draggableSphere.position.z;
 
         this.setNewCalculatedPoints();
         this.updateAverageCoordinates();
 
-        if(sphere.position){
+        const allSpheres = SuperGeometryMesh.allDefaultSpheres as SphereWithNeighbors[];
+        this.updateSphereColorsBasedOnGroups(allSpheres);
+        this.updateSphereNeighbors(allSpheres);
+        const groups = this.findGroups(allSpheres);
+        //console.log(groups)
+        this.logGroups(SuperGeometryMesh.allGroups);
 
-        }
     }
 
     private handleDragEnd(event: { object: THREE.Object3D } & THREE.Event<"dragend", DragControls>): void {
         this.isDragging = false;
         this.orbitControls.enabled = true;
         this.outerDragControls.enabled = true;
-        //if ((this as any).draggingSphere !== event.object) return;
 
         const sphere = event.object as THREE.Mesh;
         sphere.scale.set(1, 1, 1);
@@ -516,7 +554,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
             this.orbitControls.enabled = true;
         }
     }
-
     Calculate(): IPoint[]{
         let newPoints: IPoint[] = []
         let points: IPoint[] = this.apiData.points!
@@ -545,7 +582,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
         }
         return newPoints
     }
-
     Fi(i: number, lk: number, bk: number, gk: number): number{
         let result: number;
         let mul1 = 1 + lk * DEFAULT_POINTS[i - 1].x
@@ -570,27 +606,24 @@ export class SuperGeometryMesh extends THREE.Mesh {
         }
         return result
     }
-
     private initializeDragControls(){
 
         this.disposeDragControls();
 
         this.dragControls = new DragControls(
-            this.defaultSpheres,
+            SuperGeometryMesh.allDefaultSpheres,
             this.camera,
             this.renderer.domElement
         );
 
         this.isDragging = false;
     }
-
     private disposeDragControls() {
         if (this.dragControls) {
             this.dragControls.deactivate();
             this.dragControls.dispose();
         }
     }
-
     public updatePolygonColors(newColor: THREE.Color) {
         const colors = this.geometry.attributes['color'].array;
         for (let i = 0; i < colors.length; i += 3) {
@@ -600,9 +633,16 @@ export class SuperGeometryMesh extends THREE.Mesh {
         }
         this.geometry.attributes['color'].needsUpdate = true;
     }
-
     dispose() {
         SuperGeometryMesh.ID--;
+
+        this.defaultSpheres.forEach(sphere => {
+            const index = SuperGeometryMesh.allDefaultSpheres.indexOf(sphere);
+            if (index !== -1) SuperGeometryMesh.allDefaultSpheres.splice(index, 1);
+        })
+
+        const index = SuperGeometryMesh.allMeshes.indexOf(this);
+        if (index !== -1) SuperGeometryMesh.allMeshes.splice(index, 1);
 
         if (this.dragControls) {
             this.dragControls.deactivate();
@@ -626,7 +666,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
 
         this.geometry.dispose();
-        console.log("Main geometry disposing:", this.geometry['type']);
+        //console.log("Main geometry disposing:", this.geometry['type']);
 
         if (Array.isArray(this.material))
             this.material.forEach(mat => {mat.dispose();});
@@ -645,3 +685,70 @@ export class SuperGeometryMesh extends THREE.Mesh {
         });
     }
 }
+
+export enum FacePointType {
+    NegativeFace_X_Points = "NegativeFace_X_Points",
+    NegativeFace_Y_Points = "NegativeFace_Y_Points",
+    NegativeFace_Z_Points = "NegativeFace_Z_Points",
+    PositiveFace_X_Points = "PositiveFace_X_Points",
+    PositiveFace_Y_Points = "PositiveFace_Y_Points",
+    PositiveFace_Z_Points = "PositiveFace_Z_Points"
+}
+export interface SideData {
+    facePointType: FacePointType;
+    arrayIDs: number[];
+    middlePoint: THREE.Vector3;
+}
+export enum ConnectionType {
+    XAxis = 'X-Axis',
+    YAxis = 'Y-Axis',
+    ZAxis = 'Z-Axis',
+}
+export interface OppositeSideLink {
+    side1: SideData;
+    side2: SideData;
+    connectionType: ConnectionType;
+}
+
+
+export interface SphereWithNeighbors extends THREE.Mesh {
+    userData: {
+        globalId: number;
+        neighbors?: string[];
+    };
+}
+
+/* let draggableSpherePosition = new THREE.Vector3();
+
+ draggableSphere.updateMatrixWorld(true);
+ draggableSphere.getWorldPosition(draggableSpherePosition);
+
+
+ SuperGeometryMesh.allDefaultSpheres.forEach(
+     (sphere)=>
+     {
+         if(draggableSphere.uuid !== sphere.uuid){
+             let _spherePosition = new THREE.Vector3();
+             sphere.updateMatrixWorld(true);
+             sphere.getWorldPosition(_spherePosition);
+
+
+             let _sphere = sphere as THREE.Mesh
+
+             if(draggableSpherePosition.distanceTo(_spherePosition) < 0.35)
+             {
+
+                 console.log(draggableSphere.uuid + "   |   closest sphere: " + _sphere.uuid)
+                 console.log(draggableSpherePosition.distanceTo(_spherePosition))
+
+                 if (draggableSphere.material instanceof THREE.MeshBasicMaterial) {
+                     draggableSphere.material.color = new THREE.Color(0xffff00);
+                 }
+                 if (_sphere.material instanceof THREE.MeshBasicMaterial)
+                     _sphere.material.color = new THREE.Color(0xffff00);
+             }
+         }
+     }
+ )
+*/
+

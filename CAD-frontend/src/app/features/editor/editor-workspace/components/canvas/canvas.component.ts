@@ -8,7 +8,11 @@ import {CanvasResizeService} from '../../../../../core/services/three-js/canvas-
 import {CameraEventService} from '../../../../../core/services/state/camera-event.service';
 import {ApiService} from '../../../../../core/services/api/api.service';
 import {DivisionEventService} from '../../../../../core/services/state/division-event.service';
-import {FacePointType, SuperGeometryMesh} from '../../../../../core/threejsMeshes/SuperGeometryMesh';
+import {
+    FacePointType,
+    SphereWithNeighbors,
+    SuperGeometryMesh
+} from '../../../../../core/threejsMeshes/SuperGeometryMesh';
 import {clickToCreate} from './Listeners/clickToCreate';
 import {mousedownToChoose} from './Listeners/mousedownToChoose';
 import {meshHover} from './Listeners/meshHover';
@@ -49,7 +53,6 @@ export class CanvasComponent implements OnInit {
     hoveredObject: THREE.Object3D | null = null;
     hoveredPoint: THREE.Vector3 | null = null;
     PointVisualisation: THREE.Object3D = new THREE.Mesh(new THREE.SphereGeometry(0.02, 32, 32), new THREE.MeshBasicMaterial({color: new THREE.Color('#00ff00')}));
-    isRemoved: boolean = true;
 
     arrowHelper = new THREE.ArrowHelper()
 
@@ -80,7 +83,6 @@ export class CanvasComponent implements OnInit {
             error: (err) => console.error('Error while fetching DefaultPoints:', err),
         });
 
-
         this.objectManager = new ObjectManager(this.scene);
         this.dragControls = new DragControls(this.objectManager.getGroups(), this.camera, this.renderer.domElement);
         this.dragControls.transformGroup = true;
@@ -101,7 +103,6 @@ export class CanvasComponent implements OnInit {
         this.divisionEvent.divisionEvent$.subscribe((divisionConfig) => {
             this.onDivisionOcures(divisionConfig);
         })
-
 
         this.colorsEvent.defaultMeshColorEvent$.subscribe((color) => {
             if(this.activeObject){
@@ -161,12 +162,13 @@ export class CanvasComponent implements OnInit {
         if (draggedObject.children.length === 1) {
             const draggedObjectMesh = draggedObject.children[0] as SuperGeometryMesh;
             draggedObjectMesh.updateAverageCoordinates();
+            const allSpheres = SuperGeometryMesh.allDefaultSpheres as SphereWithNeighbors[];
+            draggedObjectMesh.updateSphereColorsBasedOnGroups(allSpheres);
+            draggedObjectMesh.updateSphereNeighbors(allSpheres);
         }
 
     }
-
-    private handleDragEnd(event: { object: THREE.Object3D } & THREE.Event<"dragend", DragControls>): void
-    {
+    private handleDragEnd(event: { object: THREE.Object3D } & THREE.Event<"dragend", DragControls>): void {
         this.orbitControls.enabled = true;
         const draggedObject = event.object as THREE.Group;
 
@@ -229,7 +231,7 @@ export class CanvasComponent implements OnInit {
             let minDistance = Infinity;
             let closestSideIndex = -1;
 
-            hoveredObjectMesh.allSides.forEach((side, index) => {
+            hoveredObjectMesh.allSidesData.forEach((side, index) => {
                 const distance = this.hoveredPoint!.distanceTo(side.middlePoint);
                 arr.push(distance);
 
@@ -240,7 +242,7 @@ export class CanvasComponent implements OnInit {
             });
 
             if (closestSideIndex !== -1) {
-                const closestSide = hoveredObjectMesh.allSides[closestSideIndex];
+                const closestSide = hoveredObjectMesh.allSidesData[closestSideIndex];
                 //console.log("Найближча грань:", closestSide.facePointType);
                 if (closestSide.facePointType ===  FacePointType.NegativeFace_X_Points){console.log("-X")}
                 if (closestSide.facePointType ===  FacePointType.NegativeFace_Y_Points){console.log("-Y")}
@@ -260,8 +262,7 @@ export class CanvasComponent implements OnInit {
         this.mouse.set(mouseX, mouseY);
     }
 
-    onCameraPositionChanged(cameraPosition: ICameraPosition): void
-    {
+    onCameraPositionChanged(cameraPosition: ICameraPosition): void {
         this.camera?.position.set(cameraPosition.x, cameraPosition.y, cameraPosition.z);
         this.camera?.lookAt(0, 0, 0);
         this.orbitControls?.target.set(0, 0, 0);
