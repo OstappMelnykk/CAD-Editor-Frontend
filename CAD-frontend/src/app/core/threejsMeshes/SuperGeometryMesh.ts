@@ -16,6 +16,7 @@ import { createDefaultSphere } from './utils/createDefaultSphere';
 import {DEFAULT_POINTS} from './DefaultPoints';
 import {IDivisionConfig} from '../interfaces/api/IDivisionConfig';
 import {forkJoin, Observable, Subject} from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 export class SuperGeometryMesh extends THREE.Mesh {
 
@@ -65,6 +66,13 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
     static allMeshes: SuperGeometryMesh[] = [];
     static allDefaultSpheres: THREE.Object3D[] = [];
+
+    static groups: Map<string, THREE.Group> = new Map();
+    static allGroups:SphereWithNeighbors[][] = []
+
+
+
+    public GROUP_DISTANCE = 0.35;
 
     constructor(
         private apiService: ApiService,
@@ -399,6 +407,14 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
     private handleDragStart(event: { object: THREE.Object3D } & THREE.Event<"dragstart", DragControls>): void {
 
+        const parent = (event.object as THREE.Mesh).parent as SuperGeometryMesh;
+
+
+
+        console.log("this" + new Date().toLocaleTimeString() + " -----------------")
+        console.log(parent)
+        console.log("this end ----------------------------------")
+
         if (!this.defaultSpheres.includes(event.object)) return;
 
         this.isDragging = true;
@@ -406,6 +422,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
         this.outerDragControls.enabled = false;
 
         const sphere = event.object as THREE.Mesh;
+        console.log(sphere.uuid)
         sphere.scale.set(2, 2, 2);
         (this as any).draggingSphere = sphere;
 
@@ -417,14 +434,155 @@ export class SuperGeometryMesh extends THREE.Mesh {
         );
         if (this.draggablePointIndex === -1)
             return;
+
+    }
+    private handleDrag(event: { object: THREE.Object3D } & THREE.Event<"drag", DragControls>): void {
+
+        if (!this.isDragging || this.draggablePointIndex === -1) return;
+        const draggableSphere = event.object as THREE.Mesh;
+
+        const parent = draggableSphere.parent as SuperGeometryMesh;
+
+
+        console.log(parent)
+        if (parent) {
+            parent.apiData.defaultComplexPoints![parent.draggablePointIndex].x = draggableSphere.position.x;
+            parent.apiData.defaultComplexPoints![parent.draggablePointIndex].y = draggableSphere.position.y;
+            parent.apiData.defaultComplexPoints![parent.draggablePointIndex].z = draggableSphere.position.z;
+
+            parent.setNewCalculatedPoints();
+            parent.updateAverageCoordinates();
+
+            const allSpheres = SuperGeometryMesh.allDefaultSpheres as SphereWithNeighbors[];
+            this.updateSphereColorsBasedOnGroups(allSpheres);
+            this.updateSphereNeighbors(allSpheres);
+        }
+
+        const allSpheres = SuperGeometryMesh.allDefaultSpheres as SphereWithNeighbors[];
+        const neighbors = draggableSphere.userData['neighbors'] as string[] ?? [];
+        if (neighbors.length > 0){
+            neighbors.forEach(neighbor => {
+                const neighborSphere = allSpheres.find(s => s.uuid === neighbor);
+
+                if (neighborSphere && this.areSpheresCloseEnoughByDistance(neighborSphere, draggableSphere, this.GROUP_DISTANCE / 4)){
+
+                    const parent = neighborSphere.parent as SuperGeometryMesh;
+
+
+
+                    if (parent){
+
+                        parent.draggablePointIndex = parent.apiData.defaultComplexPoints!.findIndex(
+                            defaultPoint => this.comparePositions(
+                                {x: defaultPoint.x, y: defaultPoint.y, z: defaultPoint.z},
+                                neighborSphere.position
+                            )
+                        );
+
+
+                        const draggableSphereWorldPosition = new THREE.Vector3();
+                        draggableSphere.updateMatrixWorld(true);
+                        draggableSphere.getWorldPosition(draggableSphereWorldPosition)
+
+
+                        /*const neighborSphereWorldPosition = new THREE.Vector3();
+                        neighborSphere.getWorldPosition(neighborSphereWorldPosition);*/
+
+                        const localCoordinate = parent.worldToLocal(draggableSphereWorldPosition.clone())
+
+
+                        parent.apiData.defaultComplexPoints![parent.draggablePointIndex].x = localCoordinate.x;
+                        parent.apiData.defaultComplexPoints![parent.draggablePointIndex].y = localCoordinate.y;
+                        parent.apiData.defaultComplexPoints![parent.draggablePointIndex].z = localCoordinate.z;
+
+                        parent.setNewCalculatedPoints();
+                        parent.updateAverageCoordinates();
+                    }
+
+                }
+            })
+        }
+
     }
 
-  /*  shere__ : THREE.Mesh | undefined = undefined;*/
+
+    areSpheresCloseEnoughByDistance(
+        sphere1: THREE.Object3D,
+        sphere2: THREE.Object3D,
+        epsilon: number
+    ): boolean {
+        const pos1 = new THREE.Vector3();
+        const pos2 = new THREE.Vector3();
+
+        sphere1.updateMatrixWorld(true);
+        sphere2.updateMatrixWorld(true);
+
+
+        sphere1.getWorldPosition(pos1);
+        sphere2.getWorldPosition(pos2);
+
+        const distance = pos1.distanceTo(pos2);
+
+        return distance <= epsilon;
+    }
 
 
 
 
-    public GROUP_DISTANCE = 0.35;
+    private handleDragEnd(event: { object: THREE.Object3D } & THREE.Event<"dragend", DragControls>): void {
+
+        //console.log("Drag end — index before:", this.draggablePointIndex);
+
+        this.isDragging = false;
+        this.orbitControls.enabled = true;
+        this.outerDragControls.enabled = true;
+
+        const movingSphere = event.object as THREE.Mesh;
+        movingSphere.scale.set(1, 1, 1);
+
+
+        const parent = movingSphere.parent as SuperGeometryMesh;
+
+        if (parent) {
+            const allSpheres = SuperGeometryMesh.allDefaultSpheres as SphereWithNeighbors[];
+            const neighbors = movingSphere.userData['neighbors'] as string[] ?? [];
+
+            if (neighbors.length > 0) {
+                const neighborSphere = allSpheres.find(s => s.uuid === neighbors[0]);
+                if (neighborSphere){
+
+                    const neighborSphereWorldPosition = new THREE.Vector3();
+                    neighborSphere.getWorldPosition(neighborSphereWorldPosition);
+
+                    const localCoordinate = movingSphere!.parent!.worldToLocal(neighborSphereWorldPosition.clone())
+                    movingSphere.position.copy(localCoordinate);
+
+                    console.log(this.draggablePointIndex)
+
+                    parent.apiData.defaultComplexPoints![parent.draggablePointIndex].x = localCoordinate.x;
+                    parent.apiData.defaultComplexPoints![parent.draggablePointIndex].y = localCoordinate.y;
+                    parent.apiData.defaultComplexPoints![parent.draggablePointIndex].z = localCoordinate.z;
+
+                    parent.setNewCalculatedPoints();
+                    parent.updateAverageCoordinates();
+                }
+            }
+
+        }
+
+        this.draggablePointIndex = -1;
+        (this as any).draggingSphere = null;
+    }
+
+
+    public dragObject(TargetObject: THREE.Object3D, CurrentObject: THREE.Object3D): void {
+        const TargetObjectWorldPos = new THREE.Vector3();
+        TargetObject.updateMatrixWorld(true);
+        TargetObject.getWorldPosition(TargetObjectWorldPos);
+
+        if (CurrentObject.parent) CurrentObject.parent.worldToLocal(TargetObjectWorldPos);
+        CurrentObject.position.copy(TargetObjectWorldPos);
+    }
 
 
 
@@ -448,10 +606,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
             }
         }
     }
-
-
-    static allGroups:SphereWithNeighbors[][] = []
-
     findGroups(spheres: SphereWithNeighbors[]): SphereWithNeighbors[][] {
         const visited = new Set<string>();
         const groups: SphereWithNeighbors[][] = [];
@@ -489,7 +643,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
         return groups;
     }
-
     updateSphereColorsBasedOnGroups(spheres: SphereWithNeighbors[]) {
         // Спочатку всі — білі
         for (const sphere of spheres) {
@@ -509,43 +662,9 @@ export class SuperGeometryMesh extends THREE.Mesh {
             }
         }
     }
-
-
-    private logGroups(groups: SphereWithNeighbors[][]): void {
+    logGroups(groups: SphereWithNeighbors[][]): void {
         const groupUuids = groups.map(group => group.map(s => s.uuid));
         console.log("Групи UUID:", groupUuids);
-    }
-
-    private handleDrag(event: { object: THREE.Object3D } & THREE.Event<"drag", DragControls>): void {
-
-        if (!this.isDragging || this.draggablePointIndex === -1) return;
-        const draggableSphere = event.object as THREE.Mesh;
-        //console.log(draggableSphere.uuid)
-
-        this.apiData.defaultComplexPoints![this.draggablePointIndex].x = draggableSphere.position.x;
-        this.apiData.defaultComplexPoints![this.draggablePointIndex].y = draggableSphere.position.y;
-        this.apiData.defaultComplexPoints![this.draggablePointIndex].z = draggableSphere.position.z;
-
-        this.setNewCalculatedPoints();
-        this.updateAverageCoordinates();
-
-        const allSpheres = SuperGeometryMesh.allDefaultSpheres as SphereWithNeighbors[];
-        this.updateSphereColorsBasedOnGroups(allSpheres);
-        this.updateSphereNeighbors(allSpheres);
-        const groups = this.findGroups(allSpheres);
-        //console.log(groups)
-        this.logGroups(SuperGeometryMesh.allGroups);
-
-    }
-
-    private handleDragEnd(event: { object: THREE.Object3D } & THREE.Event<"dragend", DragControls>): void {
-        this.isDragging = false;
-        this.orbitControls.enabled = true;
-        this.outerDragControls.enabled = true;
-
-        const sphere = event.object as THREE.Mesh;
-        sphere.scale.set(1, 1, 1);
-        (this as any).draggingSphere = null;
     }
 
     private handleMouseup() {
@@ -709,8 +828,6 @@ export interface OppositeSideLink {
     side2: SideData;
     connectionType: ConnectionType;
 }
-
-
 export interface SphereWithNeighbors extends THREE.Mesh {
     userData: {
         globalId: number;
@@ -718,37 +835,8 @@ export interface SphereWithNeighbors extends THREE.Mesh {
     };
 }
 
-/* let draggableSpherePosition = new THREE.Vector3();
-
- draggableSphere.updateMatrixWorld(true);
- draggableSphere.getWorldPosition(draggableSpherePosition);
 
 
- SuperGeometryMesh.allDefaultSpheres.forEach(
-     (sphere)=>
-     {
-         if(draggableSphere.uuid !== sphere.uuid){
-             let _spherePosition = new THREE.Vector3();
-             sphere.updateMatrixWorld(true);
-             sphere.getWorldPosition(_spherePosition);
-
-
-             let _sphere = sphere as THREE.Mesh
-
-             if(draggableSpherePosition.distanceTo(_spherePosition) < 0.35)
-             {
-
-                 console.log(draggableSphere.uuid + "   |   closest sphere: " + _sphere.uuid)
-                 console.log(draggableSpherePosition.distanceTo(_spherePosition))
-
-                 if (draggableSphere.material instanceof THREE.MeshBasicMaterial) {
-                     draggableSphere.material.color = new THREE.Color(0xffff00);
-                 }
-                 if (_sphere.material instanceof THREE.MeshBasicMaterial)
-                     _sphere.material.color = new THREE.Color(0xffff00);
-             }
-         }
-     }
- )
-*/
-
+/*
+console.log("neighborSphere( " + neighborSphere.position.x + " " + neighborSphere.position.y + " " + neighborSphere.position.z + ")")
+console.log("neighborSphereWorld( " + neighborSphereWorldPosition.x + " " + neighborSphereWorldPosition.y + " " + neighborSphereWorldPosition.z + ")")*/

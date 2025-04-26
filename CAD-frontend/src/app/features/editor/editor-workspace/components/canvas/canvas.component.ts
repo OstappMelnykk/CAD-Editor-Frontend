@@ -181,7 +181,17 @@ export class CanvasComponent implements OnInit {
                 draggedObjectMesh.material.opacity = draggedObjectMesh.materialOptions.mehsOpacity;
             }
         }
-        console.log(this.objectManager.getPickableObjects().map(obj => obj.uuid));
+        //console.log(this.objectManager.getPickableObjects().map(obj => obj.uuid));
+
+        if (draggedObject.children.length === 1) {
+            const draggedObjectMesh = draggedObject.children[0] as SuperGeometryMesh;
+            console.log("draggedObjectMesh.uuid: " + draggedObjectMesh.uuid);
+            draggedObjectMesh.updateAverageCoordinates();
+            const allSpheres = SuperGeometryMesh.allDefaultSpheres as SphereWithNeighbors[];
+            draggedObjectMesh.updateSphereColorsBasedOnGroups(allSpheres);
+            draggedObjectMesh.updateSphereNeighbors(allSpheres);
+            //draggedObjectMesh.logGroups(SuperGeometryMesh.allGroups);
+        }
     }
 
     resizeListener(){
@@ -243,13 +253,12 @@ export class CanvasComponent implements OnInit {
 
             if (closestSideIndex !== -1) {
                 const closestSide = hoveredObjectMesh.allSidesData[closestSideIndex];
-                //console.log("Найближча грань:", closestSide.facePointType);
-                if (closestSide.facePointType ===  FacePointType.NegativeFace_X_Points){console.log("-X")}
+               /* if (closestSide.facePointType ===  FacePointType.NegativeFace_X_Points){console.log("-X")}
                 if (closestSide.facePointType ===  FacePointType.NegativeFace_Y_Points){console.log("-Y")}
                 if (closestSide.facePointType ===  FacePointType.NegativeFace_Z_Points){console.log("-Z")}
                 if (closestSide.facePointType ===  FacePointType.PositiveFace_X_Points){console.log("+X")}
                 if (closestSide.facePointType ===  FacePointType.PositiveFace_Y_Points){console.log("+Y")}
-                if (closestSide.facePointType ===  FacePointType.PositiveFace_Z_Points){console.log("+Z")}
+                if (closestSide.facePointType ===  FacePointType.PositiveFace_Z_Points){console.log("+Z")}*/
             }
 
         }
