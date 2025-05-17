@@ -2,26 +2,22 @@ import {Component, inject, OnInit} from '@angular/core';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import {DragControls} from 'three/examples/jsm/controls/DragControls.js';
-import {GlobalVariablesService} from '../../../../../core/services/three-js/global-variables.service';
-import {InitService} from '../../../../../core/services/three-js/init.service';
-import {CanvasResizeService} from '../../../../../core/services/three-js/canvas-resize.service';
-import {CameraEventService} from '../../../../../core/services/state/camera-event.service';
-import {ApiService} from '../../../../../core/services/api/api.service';
-import {DivisionEventService} from '../../../../../core/services/state/division-event.service';
-import {
-    FacePointType,
-    SphereWithNeighbors,
-    SuperGeometryMesh
-} from '../../../../../core/threejsMeshes/SuperGeometryMesh';
+import {GlobalVariablesService} from 'app/core/services/three-js/global-variables.service';
+import {InitService} from 'app/core/services/three-js/init.service';
+import {CanvasResizeService} from 'app/core/services/three-js/canvas-resize.service';
+import {CameraEventService} from 'app/core/services/state/camera-event.service';
+import {ApiService} from 'app/core/services/api/api.service';
+import {DivisionEventService} from 'app/core/services/state/division-event.service';
+import {FacePointType, SuperGeometryMesh} from 'app/core/threejsMeshes/SuperGeometryMesh';
 import {clickToCreate} from './Listeners/clickToCreate';
 import {mousedownToChoose} from './Listeners/mousedownToChoose';
 import {meshHover} from './Listeners/meshHover';
-import {DEFAULT_POINTS} from '../../../../../core/threejsMeshes/DefaultPoints';
-import {IPoint} from '../../../../../core/interfaces/api/IPoint.interface';
-import {ICameraPosition} from '../../../../../core/interfaces/three-js/ICameraPosition.interface';
-import {IDivisionConfig} from '../../../../../core/interfaces/api/IDivisionConfig';
+import {DEFAULT_POINTS} from 'app/core/threejsMeshes/DefaultPoints';
+import {IPoint} from 'app/core/interfaces/api/IPoint.interface';
+import {ICameraPosition} from 'app/core/interfaces/three-js/ICameraPosition.interface';
+import {IDivisionConfig} from 'app/core/interfaces/api/IDivisionConfig';
 import {ObjectManager} from './ObjectManager';
-import {ColorsEventService} from '../../../../../core/services/state/colors-event.service';
+import {ColorsEventService} from 'app/core/services/state/colors-event.service';
 
 @Component({
     selector: 'app-canvas',
@@ -31,32 +27,35 @@ import {ColorsEventService} from '../../../../../core/services/state/colors-even
 })
 export class CanvasComponent implements OnInit {
 
-    globalVariablesService = inject(GlobalVariablesService)
-    initService = inject(InitService);
-    canvasResizeService = inject(CanvasResizeService);
-    cameraEventService = inject(CameraEventService);
-    apiService = inject(ApiService);
-    divisionEvent = inject(DivisionEventService);
-    colorsEvent = inject(ColorsEventService);
+    public globalVariablesService = inject(GlobalVariablesService)
+    public initService = inject(InitService);
+    public canvasResizeService = inject(CanvasResizeService);
+    public cameraEventService = inject(CameraEventService);
+    public apiService = inject(ApiService);
+    public divisionEvent = inject(DivisionEventService);
+    public colorsEvent = inject(ColorsEventService);
 
-    canvas!: HTMLCanvasElement;
-    scene!: THREE.Scene;
-    camera!: THREE.PerspectiveCamera;
-    renderer!: THREE.WebGLRenderer;
-    orbitControls!: OrbitControls;
-    dragControls!: DragControls;
+    public canvas!: HTMLCanvasElement;
+    public scene!: THREE.Scene;
+    public camera!: THREE.PerspectiveCamera;
+    public renderer!: THREE.WebGLRenderer;
+    public orbitControls!: OrbitControls;
+    public dragControls!: DragControls;
 
-    raycaster = new THREE.Raycaster();
-    mouse = new THREE.Vector2();
+    public raycaster = new THREE.Raycaster();
+    public mouse = new THREE.Vector2();
 
-    activeObject: SuperGeometryMesh | null = null;
-    hoveredObject: THREE.Object3D | null = null;
-    hoveredPoint: THREE.Vector3 | null = null;
-    PointVisualisation: THREE.Object3D = new THREE.Mesh(new THREE.SphereGeometry(0.02, 32, 32), new THREE.MeshBasicMaterial({color: new THREE.Color('#00ff00')}));
+    public activeObject: SuperGeometryMesh | null = null;
+    public hoveredObject: THREE.Object3D | null = null;
+    public hoveredPoint: THREE.Vector3 | null = null;
+    public PointVisualisation: THREE.Object3D = new THREE.Mesh(new THREE.SphereGeometry(0.02, 32, 32), new THREE.MeshBasicMaterial({color: new THREE.Color('#00ff00')}));
 
-    arrowHelper = new THREE.ArrowHelper()
+    public arrowHelper = new THREE.ArrowHelper()
 
-    objectManager!: ObjectManager;
+    public objectManager!: ObjectManager;
+
+    public isDragging: boolean = false;
+    public isHoveredAndDraging: boolean = false;
 
     ngOnInit()
     {
@@ -144,6 +143,7 @@ export class CanvasComponent implements OnInit {
 
     private handleDragStart(event: { object: THREE.Object3D } & THREE.Event<"dragstart", DragControls>): void {
         this.orbitControls.enabled = false;
+        this.isDragging = true
         const draggedObject = event.object as THREE.Group;
 
         if (draggedObject.children.length === 1) {
@@ -162,14 +162,65 @@ export class CanvasComponent implements OnInit {
         if (draggedObject.children.length === 1) {
             const draggedObjectMesh = draggedObject.children[0] as SuperGeometryMesh;
             draggedObjectMesh.updateAverageCoordinates();
-            const allSpheres = SuperGeometryMesh.allDefaultSpheres as SphereWithNeighbors[];
+            /*const allSpheres = SuperGeometryMesh.allDefaultSpheres as SphereWithNeighbors[];
             draggedObjectMesh.updateSphereColorsBasedOnGroups(allSpheres);
-            draggedObjectMesh.updateSphereNeighbors(allSpheres);
+            draggedObjectMesh.updateSphereNeighbors(allSpheres);*/
+        }
+
+
+        if (this.isHoveredAndDraging) {
+            let minDistance = Infinity;
+            let closestSideIndex = -1;
+
+            let arr = new Array<number>();
+            const hoveredObjectMesh = this.hoveredObject as SuperGeometryMesh;
+            if (this.hoveredObject){
+                hoveredObjectMesh.allSidesData.forEach((side, index) => {
+                    const distance = this.hoveredPoint!.distanceTo(side.middlePoint);
+                    arr.push(distance);
+
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestSideIndex = index;
+                    }
+                });
+
+                if (closestSideIndex !== -1) {
+                    const closestSide = hoveredObjectMesh.allSidesData[closestSideIndex];
+
+                    if (closestSide.facePointType ===  FacePointType.NegativeFace_X_Points){
+                        console.log("-X")
+
+                    }
+                    if (closestSide.facePointType ===  FacePointType.NegativeFace_Y_Points){
+                        console.log("-Y")
+
+                    }
+                    if (closestSide.facePointType ===  FacePointType.NegativeFace_Z_Points){
+                        console.log("-Z")
+
+                    }
+                    if (closestSide.facePointType ===  FacePointType.PositiveFace_X_Points){
+                        console.log("+X")
+
+                    }
+                    if (closestSide.facePointType ===  FacePointType.PositiveFace_Y_Points){
+                        console.log("+Y")
+
+                    }
+                    if (closestSide.facePointType ===  FacePointType.PositiveFace_Z_Points){
+                        console.log("+Z")
+
+                    }
+                }
+            }
+
         }
 
     }
     private handleDragEnd(event: { object: THREE.Object3D } & THREE.Event<"dragend", DragControls>): void {
         this.orbitControls.enabled = true;
+        this.isDragging = false;
         const draggedObject = event.object as THREE.Group;
 
         if (draggedObject.children.length === 1) {
@@ -181,24 +232,138 @@ export class CanvasComponent implements OnInit {
                 draggedObjectMesh.material.opacity = draggedObjectMesh.materialOptions.mehsOpacity;
             }
         }
-        //console.log(this.objectManager.getPickableObjects().map(obj => obj.uuid));
 
         if (draggedObject.children.length === 1) {
             const draggedObjectMesh = draggedObject.children[0] as SuperGeometryMesh;
             console.log("draggedObjectMesh.uuid: " + draggedObjectMesh.uuid);
             draggedObjectMesh.updateAverageCoordinates();
-            const allSpheres = SuperGeometryMesh.allDefaultSpheres as SphereWithNeighbors[];
+            /*const allSpheres = SuperGeometryMesh.allDefaultSpheres as SphereWithNeighbors[];
             draggedObjectMesh.updateSphereColorsBasedOnGroups(allSpheres);
-            draggedObjectMesh.updateSphereNeighbors(allSpheres);
-            //draggedObjectMesh.logGroups(SuperGeometryMesh.allGroups);
+            draggedObjectMesh.updateSphereNeighbors(allSpheres);*/
         }
+
+        if (this.isHoveredAndDraging) {
+            let minDistance = Infinity;
+            let closestSideIndex = -1;
+
+            let arr = new Array<number>();
+            const hoveredObjectMesh = this.hoveredObject as SuperGeometryMesh;
+            if (this.hoveredObject){
+                hoveredObjectMesh.allSidesData.forEach((side, index) => {
+                    const distance = this.hoveredPoint!.distanceTo(side.middlePoint);
+                    arr.push(distance);
+
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestSideIndex = index;
+                    }
+                });
+
+
+
+                if (closestSideIndex !== -1) {
+                    const closestSide = hoveredObjectMesh.allSidesData[closestSideIndex];
+
+                    const activeObject = this.activeObject as SuperGeometryMesh;
+
+                    let hoveredObjectMeshdivisionConfig =  hoveredObjectMesh.divisionConfig
+                    let activeObjectdivisionConfig = activeObject.divisionConfig
+
+                    if(
+                        hoveredObjectMeshdivisionConfig.x !== activeObjectdivisionConfig.x ||
+                        hoveredObjectMeshdivisionConfig.y !== activeObjectdivisionConfig.y ||
+                        hoveredObjectMeshdivisionConfig.z !== activeObjectdivisionConfig.z
+                    ){
+                        /*if(this.activeObject){
+                            const oldObject = this.activeObject;
+                            const activeMeshPosition = new THREE.Vector3();
+                            oldObject.getWorldPosition(activeMeshPosition);
+                            const activeMeshDefaultPoints = oldObject.apiData.defaultComplexPoints!;
+
+                            this.objectManager.removeMesh(oldObject);
+                            this.updateDragControls();
+                            this.activeObject = null;
+                            let newMesh = this.createMesh(hoveredObjectMeshdivisionConfig, activeMeshPosition, activeMeshDefaultPoints);
+                            this.activeObject = newMesh;
+                        }*/
+
+                        console.log("CHANGE DIVISION CONFIG")
+
+
+                        /*facePointType: FacePointType;
+                        arrayIDs: number[];
+                        oppositeFacePointType: FacePointType;
+                        oppositeArrayIDs: number[];*/
+                    }
+
+
+                    console.log("Connect: "+ closestSide.facePointType + " and " + closestSide.oppositeFacePointType)
+                    console.log("Connect: "+ closestSide.arrayIDs + " and " + closestSide.oppositeArrayIDs)
+
+
+                    if (closestSide.facePointType === FacePointType.NegativeFace_X_Points) {
+                        console.log("-X")
+
+                    }
+                    if (closestSide.facePointType === FacePointType.NegativeFace_Y_Points) {
+                        console.log("-Y")
+
+                    }
+                    if (closestSide.facePointType === FacePointType.NegativeFace_Z_Points) {
+                        console.log("-Z")
+
+                    }
+                    if (closestSide.facePointType === FacePointType.PositiveFace_X_Points) {
+                        console.log("+X")
+
+                    }
+                    if (closestSide.facePointType === FacePointType.PositiveFace_Y_Points) {
+                        console.log("+Y")
+
+                    }
+                    if (closestSide.facePointType === FacePointType.PositiveFace_Z_Points) {
+                        console.log("+Z")
+
+                    }
+                }
+            }
+
+        }
+
+
+        console.log("Drg" + " " + this.activeObject?.uuid)
+        console.log("Drg" + " " + this.activeObject?.uuid)
+        console.log("Drg" + " " + this.activeObject?.uuid)
+        console.log("Drg" + " " + this.activeObject?.uuid)
+
+
+
+
+        let counter = 0
+        this.activeObject!.defaultSpheres.forEach((sphere) => {
+
+            this.activeObject!.draggablePointIndex =  this.activeObject!.apiData.defaultComplexPoints!.findIndex(
+                defaultPoint => this.activeObject!.comparePositions(
+                    {x: defaultPoint.x, y: defaultPoint.y, z: defaultPoint.z},
+                    sphere.position
+                )
+            );
+
+            counter += this.activeObject!.getTheSamePositionAsNeighbor(sphere)
+
+        })
+        if(counter === 8){
+            console.log("SidesConected")
+        }
+        console.log("counter: " + counter)
+
+        //getTheSamePositionAsNeighbor
     }
 
     resizeListener(){
         window.addEventListener('resize', () => this.canvasResizeService.onCanvasResize());
         window.dispatchEvent(new Event('resize'));
     }
-
     private initializeGlobalVariables() {
         this.canvas = this.globalVariablesService.get('canvas') as HTMLCanvasElement;
         this.scene = this.globalVariablesService.get('scene') as THREE.Scene;
@@ -206,18 +371,15 @@ export class CanvasComponent implements OnInit {
         this.renderer = this.globalVariablesService.get('renderer') as THREE.WebGLRenderer;
         this.orbitControls = this.globalVariablesService.get('orbitControls') as OrbitControls;
     }
-
     private handleCanvasClick(event: MouseEvent): void {
         clickToCreate.call(this, event, {
             setMouse: this.setMouse.bind(this),
             createMesh: this.createMesh.bind(this),
         });
     }
-
     private handleCanvasMousedown(event: MouseEvent): void {
         mousedownToChoose.call(this, event, {setMouse: this.setMouse.bind(this),});
     }
-
     private handleCanvasMousemove(event: MouseEvent): void {
 
         const result = meshHover.call(this, event, { setMouse: this.setMouse.bind(this) })
@@ -235,32 +397,14 @@ export class CanvasComponent implements OnInit {
             this.PointVisualisation.position.copy(this.hoveredPoint);
             this.scene.add(this.PointVisualisation);
 
-
-            let arr = new Array<number>();
-            const hoveredObjectMesh = this.hoveredObject as SuperGeometryMesh;
-            let minDistance = Infinity;
-            let closestSideIndex = -1;
-
-            hoveredObjectMesh.allSidesData.forEach((side, index) => {
-                const distance = this.hoveredPoint!.distanceTo(side.middlePoint);
-                arr.push(distance);
-
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestSideIndex = index;
-                }
-            });
-
-            if (closestSideIndex !== -1) {
-                const closestSide = hoveredObjectMesh.allSidesData[closestSideIndex];
-               /* if (closestSide.facePointType ===  FacePointType.NegativeFace_X_Points){console.log("-X")}
-                if (closestSide.facePointType ===  FacePointType.NegativeFace_Y_Points){console.log("-Y")}
-                if (closestSide.facePointType ===  FacePointType.NegativeFace_Z_Points){console.log("-Z")}
-                if (closestSide.facePointType ===  FacePointType.PositiveFace_X_Points){console.log("+X")}
-                if (closestSide.facePointType ===  FacePointType.PositiveFace_Y_Points){console.log("+Y")}
-                if (closestSide.facePointType ===  FacePointType.PositiveFace_Z_Points){console.log("+Z")}*/
+            if (this.isDragging) {
+                if (this.hoveredObject)
+                    this.isHoveredAndDraging = true;
+                else
+                    this.isHoveredAndDraging = false;
             }
-
+            else
+                this.isHoveredAndDraging = false;
         }
     }
 
@@ -277,7 +421,6 @@ export class CanvasComponent implements OnInit {
         this.orbitControls?.target.set(0, 0, 0);
         this.orbitControls?.update();
     }
-
     onDivisionOcures(divisionConfig: IDivisionConfig){
         if (this.activeObject === null) {
             console.log("No active mesh");
@@ -293,10 +436,9 @@ export class CanvasComponent implements OnInit {
         this.activeObject = null;
         this.createMesh(divisionConfig, activeMeshPosition, activeMeshDefaultPoints);
     }
-
     createMesh(divisionConfig: IDivisionConfig = { x: 1, y: 1, z: 1 },
                oldPosition?: THREE.Vector3,
-               oldDefaultPoints?: IPoint[]): void
+               oldDefaultPoints?: IPoint[]): SuperGeometryMesh
     {
         const superGeometryMesh = new SuperGeometryMesh(
             this.apiService,
@@ -315,6 +457,7 @@ export class CanvasComponent implements OnInit {
 
         this.objectManager.addMesh(superGeometryMesh);
         this.updateDragControls();
+        return superGeometryMesh
     }
 
     private updateDragControls(): void {

@@ -16,7 +16,6 @@ import { createDefaultSphere } from './utils/createDefaultSphere';
 import {DEFAULT_POINTS} from './DefaultPoints';
 import {IDivisionConfig} from '../interfaces/api/IDivisionConfig';
 import {forkJoin, Observable, Subject} from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
 export class SuperGeometryMesh extends THREE.Mesh {
 
@@ -33,7 +32,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
     }
     public readonly materialOptions: IMaterialOptions = {
         wireframeOpacity: 0.2,
-        mehsOpacity: 0.1,
+        mehsOpacity: 1,
         wireframe: false,
         depthWrite: false,
         depthTest: true
@@ -59,9 +58,9 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
     private apiDataLoaded$ = new Subject<void>();
 
-    allSidesData: SideData[] = []
-    allSidesPoints: number[] = []
-    AverageCoordinateMarkers: THREE.Object3D[] = []
+    public allSidesData: SideData[] = []
+    public allSidesPoints: number[] = []
+    public AverageCoordinateMarkers: THREE.Object3D[] = []
 
 
     static allMeshes: SuperGeometryMesh[] = [];
@@ -70,15 +69,13 @@ export class SuperGeometryMesh extends THREE.Mesh {
     static groups: Map<string, THREE.Group> = new Map();
     static allGroups:SphereWithNeighbors[][] = []
 
-
-
     public GROUP_DISTANCE = 0.35;
 
     constructor(
         private apiService: ApiService,
         private globalVariablesService: GlobalVariablesService,
         private outerDragControls: DragControls,
-        private divisionConfig: IDivisionConfig,
+        public divisionConfig: IDivisionConfig,
         DefaultPoints?: IPoint[]
     )
     {
@@ -101,15 +98,14 @@ export class SuperGeometryMesh extends THREE.Mesh {
             if (DefaultPoints) this.setDefaultPoints(DefaultPoints);
 
 
-
             this.fetchPoints().subscribe({
                 next: (results) => {
-                    this.allSidesData.push({facePointType: FacePointType.NegativeFace_X_Points, arrayIDs: results.NegativeFace_X_Points, middlePoint:this.GetAverageCoordinate(results.NegativeFace_X_Points)})
-                    this.allSidesData.push({facePointType: FacePointType.NegativeFace_Y_Points, arrayIDs: results.NegativeFace_Y_Points, middlePoint:this.GetAverageCoordinate(results.NegativeFace_Y_Points)})
-                    this.allSidesData.push({facePointType: FacePointType.NegativeFace_Z_Points, arrayIDs: results.NegativeFace_Z_Points, middlePoint:this.GetAverageCoordinate(results.NegativeFace_Z_Points)})
-                    this.allSidesData.push({facePointType: FacePointType.PositiveFace_X_Points, arrayIDs: results.PositiveFace_X_Points, middlePoint:this.GetAverageCoordinate(results.PositiveFace_X_Points)})
-                    this.allSidesData.push({facePointType: FacePointType.PositiveFace_Y_Points, arrayIDs: results.PositiveFace_Y_Points, middlePoint:this.GetAverageCoordinate(results.PositiveFace_Y_Points)})
-                    this.allSidesData.push({facePointType: FacePointType.PositiveFace_Z_Points, arrayIDs: results.PositiveFace_Z_Points, middlePoint:this.GetAverageCoordinate(results.PositiveFace_Z_Points)})
+                    this.allSidesData.push({facePointType: FacePointType.NegativeFace_X_Points, arrayIDs: results.NegativeFace_X_Points, oppositeFacePointType: FacePointType.PositiveFace_X_Points, oppositeArrayIDs: results.PositiveFace_X_Points, middlePoint:this.GetAverageCoordinate(results.NegativeFace_X_Points)})
+                    this.allSidesData.push({facePointType: FacePointType.NegativeFace_Y_Points, arrayIDs: results.NegativeFace_Y_Points, oppositeFacePointType: FacePointType.PositiveFace_Y_Points, oppositeArrayIDs: results.PositiveFace_Y_Points, middlePoint:this.GetAverageCoordinate(results.NegativeFace_Y_Points)})
+                    this.allSidesData.push({facePointType: FacePointType.NegativeFace_Z_Points, arrayIDs: results.NegativeFace_Z_Points, oppositeFacePointType: FacePointType.PositiveFace_Z_Points, oppositeArrayIDs: results.PositiveFace_Z_Points, middlePoint:this.GetAverageCoordinate(results.NegativeFace_Z_Points)})
+                    this.allSidesData.push({facePointType: FacePointType.PositiveFace_X_Points, arrayIDs: results.PositiveFace_X_Points, oppositeFacePointType: FacePointType.NegativeFace_X_Points, oppositeArrayIDs: results.NegativeFace_X_Points, middlePoint:this.GetAverageCoordinate(results.PositiveFace_X_Points)})
+                    this.allSidesData.push({facePointType: FacePointType.PositiveFace_Y_Points, arrayIDs: results.PositiveFace_Y_Points, oppositeFacePointType: FacePointType.NegativeFace_Y_Points, oppositeArrayIDs: results.NegativeFace_Y_Points, middlePoint:this.GetAverageCoordinate(results.PositiveFace_Y_Points)})
+                    this.allSidesData.push({facePointType: FacePointType.PositiveFace_Z_Points, arrayIDs: results.PositiveFace_Z_Points, oppositeFacePointType: FacePointType.NegativeFace_Z_Points, oppositeArrayIDs: results.NegativeFace_Z_Points, middlePoint:this.GetAverageCoordinate(results.PositiveFace_Z_Points)})
 
                     this.allSidesPoints = [
                         ...results.NegativeFace_X_Points,
@@ -127,6 +123,8 @@ export class SuperGeometryMesh extends THREE.Mesh {
             });
         });
     }
+
+
 
     GetAverageCoordinate(arrayIDs: number[]): THREE.Vector3 {
         const positionAttribute = this.geometry.getAttribute('position') as THREE.BufferAttribute;
@@ -398,7 +396,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
         this.dragControls.addEventListener('dragend', (event) => {this.handleDragEnd(event);});
         this.renderer.domElement.addEventListener('mouseup', () => {this.handleMouseup()})
     }
-    private comparePositions(pos1: IPosition, pos2: IPosition, tolerance = 0.001) {
+    public comparePositions(pos1: IPosition, pos2: IPosition, tolerance = 0.001) {
         return Math.abs(pos1.x - pos2.x) < tolerance &&
             Math.abs(pos1.y - pos2.y) < tolerance &&
             Math.abs(pos1.z - pos2.z) < tolerance;
@@ -406,14 +404,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
 
     private handleDragStart(event: { object: THREE.Object3D } & THREE.Event<"dragstart", DragControls>): void {
-
-        const parent = (event.object as THREE.Mesh).parent as SuperGeometryMesh;
-
-
-
-        console.log("this" + new Date().toLocaleTimeString() + " -----------------")
-        console.log(parent)
-        console.log("this end ----------------------------------")
 
         if (!this.defaultSpheres.includes(event.object)) return;
 
@@ -434,8 +424,29 @@ export class SuperGeometryMesh extends THREE.Mesh {
         );
         if (this.draggablePointIndex === -1)
             return;
-
     }
+
+    areSpheresCloseEnoughByDistance(
+        sphere1: THREE.Object3D,
+        sphere2: THREE.Object3D,
+        epsilon: number
+    ): boolean {
+        const pos1 = new THREE.Vector3();
+        const pos2 = new THREE.Vector3();
+
+        sphere1.updateMatrixWorld(true);
+        sphere2.updateMatrixWorld(true);
+
+
+        sphere1.getWorldPosition(pos1);
+        sphere2.getWorldPosition(pos2);
+
+        const distance = pos1.distanceTo(pos2);
+
+        return distance <= epsilon;
+    }
+
+
     private handleDrag(event: { object: THREE.Object3D } & THREE.Event<"drag", DragControls>): void {
 
         if (!this.isDragging || this.draggablePointIndex === -1) return;
@@ -458,6 +469,10 @@ export class SuperGeometryMesh extends THREE.Mesh {
             this.updateSphereNeighbors(allSpheres);
         }
 
+        this.moveAllNeighborSpheres(draggableSphere)
+
+    }
+    moveAllNeighborSpheres(draggableSphere: THREE.Object3D){
         const allSpheres = SuperGeometryMesh.allDefaultSpheres as SphereWithNeighbors[];
         const neighbors = draggableSphere.userData['neighbors'] as string[] ?? [];
         if (neighbors.length > 0){
@@ -484,12 +499,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
                         draggableSphere.updateMatrixWorld(true);
                         draggableSphere.getWorldPosition(draggableSphereWorldPosition)
 
-
-                        /*const neighborSphereWorldPosition = new THREE.Vector3();
-                        neighborSphere.getWorldPosition(neighborSphereWorldPosition);*/
-
                         const localCoordinate = parent.worldToLocal(draggableSphereWorldPosition.clone())
-
 
                         parent.apiData.defaultComplexPoints![parent.draggablePointIndex].x = localCoordinate.x;
                         parent.apiData.defaultComplexPoints![parent.draggablePointIndex].y = localCoordinate.y;
@@ -502,31 +512,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
                 }
             })
         }
-
     }
-
-
-    areSpheresCloseEnoughByDistance(
-        sphere1: THREE.Object3D,
-        sphere2: THREE.Object3D,
-        epsilon: number
-    ): boolean {
-        const pos1 = new THREE.Vector3();
-        const pos2 = new THREE.Vector3();
-
-        sphere1.updateMatrixWorld(true);
-        sphere2.updateMatrixWorld(true);
-
-
-        sphere1.getWorldPosition(pos1);
-        sphere2.getWorldPosition(pos2);
-
-        const distance = pos1.distanceTo(pos2);
-
-        return distance <= epsilon;
-    }
-
-
 
 
     private handleDragEnd(event: { object: THREE.Object3D } & THREE.Event<"dragend", DragControls>): void {
@@ -540,7 +526,14 @@ export class SuperGeometryMesh extends THREE.Mesh {
         const movingSphere = event.object as THREE.Mesh;
         movingSphere.scale.set(1, 1, 1);
 
+        this.getTheSamePositionAsNeighbor(movingSphere);
 
+        this.draggablePointIndex = -1;
+        (this as any).draggingSphere = null;
+    }
+
+
+    public getTheSamePositionAsNeighbor(movingSphere: THREE.Object3D): number {
         const parent = movingSphere.parent as SuperGeometryMesh;
 
         if (parent) {
@@ -566,22 +559,10 @@ export class SuperGeometryMesh extends THREE.Mesh {
                     parent.setNewCalculatedPoints();
                     parent.updateAverageCoordinates();
                 }
+                return 1
             }
-
         }
-
-        this.draggablePointIndex = -1;
-        (this as any).draggingSphere = null;
-    }
-
-
-    public dragObject(TargetObject: THREE.Object3D, CurrentObject: THREE.Object3D): void {
-        const TargetObjectWorldPos = new THREE.Vector3();
-        TargetObject.updateMatrixWorld(true);
-        TargetObject.getWorldPosition(TargetObjectWorldPos);
-
-        if (CurrentObject.parent) CurrentObject.parent.worldToLocal(TargetObjectWorldPos);
-        CurrentObject.position.copy(TargetObjectWorldPos);
+        return 0;
     }
 
 
@@ -595,7 +576,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
             sphere.userData.neighbors = [];
 
             for (const other of spheres) {
-                if (sphere.uuid === other.uuid) continue;
+                if (sphere.uuid === other.uuid || (sphere.parent as SuperGeometryMesh).uuid === (other.parent as SuperGeometryMesh).uuid) continue;
 
                 const otherPos = new THREE.Vector3();
                 other.getWorldPosition(otherPos);
@@ -816,6 +797,8 @@ export enum FacePointType {
 export interface SideData {
     facePointType: FacePointType;
     arrayIDs: number[];
+    oppositeFacePointType: FacePointType;
+    oppositeArrayIDs: number[];
     middlePoint: THREE.Vector3;
 }
 export enum ConnectionType {
@@ -834,9 +817,3 @@ export interface SphereWithNeighbors extends THREE.Mesh {
         neighbors?: string[];
     };
 }
-
-
-
-/*
-console.log("neighborSphere( " + neighborSphere.position.x + " " + neighborSphere.position.y + " " + neighborSphere.position.z + ")")
-console.log("neighborSphereWorld( " + neighborSphereWorldPosition.x + " " + neighborSphereWorldPosition.y + " " + neighborSphereWorldPosition.z + ")")*/
