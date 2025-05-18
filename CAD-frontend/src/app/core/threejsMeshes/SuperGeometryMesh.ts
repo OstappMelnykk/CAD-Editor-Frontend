@@ -56,7 +56,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
     public draggablePointIndex: number = -1;
     public isDragging = false;
 
-    private apiDataLoaded$ = new Subject<void>();
+    public apiDataLoaded$ = new Subject<void>();
 
     public allSidesData: SideData[] = []
     public allSidesPoints: number[] = []
@@ -549,8 +549,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
                     const localCoordinate = movingSphere!.parent!.worldToLocal(neighborSphereWorldPosition.clone())
                     movingSphere.position.copy(localCoordinate);
-
-                    console.log(this.draggablePointIndex)
 
                     parent.apiData.defaultComplexPoints![parent.draggablePointIndex].x = localCoordinate.x;
                     parent.apiData.defaultComplexPoints![parent.draggablePointIndex].y = localCoordinate.y;

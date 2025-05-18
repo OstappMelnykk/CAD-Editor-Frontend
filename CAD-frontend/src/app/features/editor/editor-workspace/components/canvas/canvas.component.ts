@@ -8,7 +8,7 @@ import {CanvasResizeService} from 'app/core/services/three-js/canvas-resize.serv
 import {CameraEventService} from 'app/core/services/state/camera-event.service';
 import {ApiService} from 'app/core/services/api/api.service';
 import {DivisionEventService} from 'app/core/services/state/division-event.service';
-import {FacePointType, SuperGeometryMesh} from 'app/core/threejsMeshes/SuperGeometryMesh';
+import { FacePointType, SphereWithNeighbors, SuperGeometryMesh} from 'app/core/threejsMeshes/SuperGeometryMesh';
 import {clickToCreate} from './Listeners/clickToCreate';
 import {mousedownToChoose} from './Listeners/mousedownToChoose';
 import {meshHover} from './Listeners/meshHover';
@@ -18,6 +18,7 @@ import {ICameraPosition} from 'app/core/interfaces/three-js/ICameraPosition.inte
 import {IDivisionConfig} from 'app/core/interfaces/api/IDivisionConfig';
 import {ObjectManager} from './ObjectManager';
 import {ColorsEventService} from 'app/core/services/state/colors-event.service';
+import {firstValueFrom} from 'rxjs';
 
 @Component({
     selector: 'app-canvas',
@@ -167,62 +168,13 @@ export class CanvasComponent implements OnInit {
             draggedObjectMesh.updateSphereNeighbors(allSpheres);*/
         }
 
-
-        if (this.isHoveredAndDraging) {
-            let minDistance = Infinity;
-            let closestSideIndex = -1;
-
-            let arr = new Array<number>();
-            const hoveredObjectMesh = this.hoveredObject as SuperGeometryMesh;
-            if (this.hoveredObject){
-                hoveredObjectMesh.allSidesData.forEach((side, index) => {
-                    const distance = this.hoveredPoint!.distanceTo(side.middlePoint);
-                    arr.push(distance);
-
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        closestSideIndex = index;
-                    }
-                });
-
-                if (closestSideIndex !== -1) {
-                    const closestSide = hoveredObjectMesh.allSidesData[closestSideIndex];
-
-                    if (closestSide.facePointType ===  FacePointType.NegativeFace_X_Points){
-                        console.log("-X")
-
-                    }
-                    if (closestSide.facePointType ===  FacePointType.NegativeFace_Y_Points){
-                        console.log("-Y")
-
-                    }
-                    if (closestSide.facePointType ===  FacePointType.NegativeFace_Z_Points){
-                        console.log("-Z")
-
-                    }
-                    if (closestSide.facePointType ===  FacePointType.PositiveFace_X_Points){
-                        console.log("+X")
-
-                    }
-                    if (closestSide.facePointType ===  FacePointType.PositiveFace_Y_Points){
-                        console.log("+Y")
-
-                    }
-                    if (closestSide.facePointType ===  FacePointType.PositiveFace_Z_Points){
-                        console.log("+Z")
-
-                    }
-                }
-            }
-
-        }
-
     }
-    private handleDragEnd(event: { object: THREE.Object3D } & THREE.Event<"dragend", DragControls>): void {
+    private async handleDragEnd(event: { object: THREE.Object3D } & THREE.Event<"dragend", DragControls>): Promise<void> {
         this.orbitControls.enabled = true;
-        this.isDragging = false;
+
         const draggedObject = event.object as THREE.Group;
 
+        /////////////////////////////////////////////
         if (draggedObject.children.length === 1) {
             const draggedObjectMesh = draggedObject.children[0] as SuperGeometryMesh;
             if (Array.isArray(draggedObjectMesh.material))
@@ -235,110 +187,125 @@ export class CanvasComponent implements OnInit {
 
         if (draggedObject.children.length === 1) {
             const draggedObjectMesh = draggedObject.children[0] as SuperGeometryMesh;
-            console.log("draggedObjectMesh.uuid: " + draggedObjectMesh.uuid);
             draggedObjectMesh.updateAverageCoordinates();
-            /*const allSpheres = SuperGeometryMesh.allDefaultSpheres as SphereWithNeighbors[];
-            draggedObjectMesh.updateSphereColorsBasedOnGroups(allSpheres);
-            draggedObjectMesh.updateSphereNeighbors(allSpheres);*/
-        }
 
-        if (this.isHoveredAndDraging) {
+        }
+        /////////////////////////////////////////////
+
+
+
+
+        if(this.hoveredObject && this.isDragging && this.hoveredObject.uuid !== this.activeObject?.uuid) {
             let minDistance = Infinity;
             let closestSideIndex = -1;
 
-            let arr = new Array<number>();
-            const hoveredObjectMesh = this.hoveredObject as SuperGeometryMesh;
-            if (this.hoveredObject){
-                hoveredObjectMesh.allSidesData.forEach((side, index) => {
-                    const distance = this.hoveredPoint!.distanceTo(side.middlePoint);
-                    arr.push(distance);
+            let hoveredMesh = this.hoveredObject as SuperGeometryMesh;
+            let activeMesh = this.activeObject as SuperGeometryMesh;
 
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        closestSideIndex = index;
-                    }
-                });
+            hoveredMesh.allSidesData.forEach((side, index) => {
+                const distance = this.hoveredPoint!.distanceTo(side.middlePoint);
 
-
-
-                if (closestSideIndex !== -1) {
-                    const closestSide = hoveredObjectMesh.allSidesData[closestSideIndex];
-
-                    const activeObject = this.activeObject as SuperGeometryMesh;
-
-                    let hoveredObjectMeshdivisionConfig =  hoveredObjectMesh.divisionConfig
-                    let activeObjectdivisionConfig = activeObject.divisionConfig
-
-                    if(
-                        hoveredObjectMeshdivisionConfig.x !== activeObjectdivisionConfig.x ||
-                        hoveredObjectMeshdivisionConfig.y !== activeObjectdivisionConfig.y ||
-                        hoveredObjectMeshdivisionConfig.z !== activeObjectdivisionConfig.z
-                    ){
-                        /*if(this.activeObject){
-                            const oldObject = this.activeObject;
-                            const activeMeshPosition = new THREE.Vector3();
-                            oldObject.getWorldPosition(activeMeshPosition);
-                            const activeMeshDefaultPoints = oldObject.apiData.defaultComplexPoints!;
-
-                            this.objectManager.removeMesh(oldObject);
-                            this.updateDragControls();
-                            this.activeObject = null;
-                            let newMesh = this.createMesh(hoveredObjectMeshdivisionConfig, activeMeshPosition, activeMeshDefaultPoints);
-                            this.activeObject = newMesh;
-                        }*/
-
-                        console.log("CHANGE DIVISION CONFIG")
-
-
-                        /*facePointType: FacePointType;
-                        arrayIDs: number[];
-                        oppositeFacePointType: FacePointType;
-                        oppositeArrayIDs: number[];*/
-                    }
-
-
-                    console.log("Connect: "+ closestSide.facePointType + " and " + closestSide.oppositeFacePointType)
-                    console.log("Connect: "+ closestSide.arrayIDs + " and " + closestSide.oppositeArrayIDs)
-
-
-                    if (closestSide.facePointType === FacePointType.NegativeFace_X_Points) {
-                        console.log("-X")
-
-                    }
-                    if (closestSide.facePointType === FacePointType.NegativeFace_Y_Points) {
-                        console.log("-Y")
-
-                    }
-                    if (closestSide.facePointType === FacePointType.NegativeFace_Z_Points) {
-                        console.log("-Z")
-
-                    }
-                    if (closestSide.facePointType === FacePointType.PositiveFace_X_Points) {
-                        console.log("+X")
-
-                    }
-                    if (closestSide.facePointType === FacePointType.PositiveFace_Y_Points) {
-                        console.log("+Y")
-
-                    }
-                    if (closestSide.facePointType === FacePointType.PositiveFace_Z_Points) {
-                        console.log("+Z")
-
-                    }
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestSideIndex = index;
                 }
+
+            });
+
+            if (closestSideIndex === -1)
+                return;
+
+            const closestSideData = hoveredMesh.allSidesData[closestSideIndex];
+
+            let hoveredMesh_DivisionConfig = hoveredMesh.divisionConfig
+            let activeMesh_DivisionConfig = activeMesh.divisionConfig
+
+
+            if (
+                hoveredMesh_DivisionConfig.x !== activeMesh_DivisionConfig.x ||
+                hoveredMesh_DivisionConfig.y !== activeMesh_DivisionConfig.y ||
+                hoveredMesh_DivisionConfig.z !== activeMesh_DivisionConfig.z
+            ) {
+                if (this.activeObject === null) {
+                    console.log("No active mesh");
+                    return;
+                }
+                const oldObject = this.activeObject;
+                const activeMeshPosition = new THREE.Vector3();
+                oldObject.getWorldPosition(activeMeshPosition);
+                const activeMeshDefaultPoints = oldObject.apiData.defaultComplexPoints!;
+
+                this.objectManager.removeMesh(oldObject);
+                this.updateDragControls();
+                this.activeObject = null;
+                let newMesh = await this.createMesh(hoveredMesh_DivisionConfig, activeMeshPosition, activeMeshDefaultPoints);
+                this.activeObject = newMesh;
+                activeMesh = this.activeObject as SuperGeometryMesh;
+                console.log("CHANGE DIVISION CONFIG")
             }
 
+            // const activeMesh_defaultSpheres = activeMesh.defaultSpheres
+            //     .map(obj => obj.userData['globalId'] - 1);
+            // const hoveredMesh_defaultSpheres = hoveredMesh.defaultSpheres
+            //     .map(obj => obj.userData['globalId'] - 1)
+            //
+            // console.log(closestSideData.arrayIDs.join(' '))
+            // console.log(hoveredMesh_defaultSpheres.join(' '));
+            // console.log("//////////////////////////////////")
+            //
+            // console.log(closestSideData.oppositeArrayIDs.join(' '))
+            // console.log(activeMesh_defaultSpheres.join(' '));
+
+            for (let i = 0; i < closestSideData.arrayIDs.length; i++) {
+                let id_arrayToConnect = closestSideData.arrayIDs[i]
+                let id_oppositeArrayToConnect = closestSideData.oppositeArrayIDs[i]
+
+                const active_matchedObject = activeMesh.defaultSpheres.find(obj => (obj.userData['globalId'] - 1) === id_oppositeArrayToConnect);
+                const hovered_matchedObject = hoveredMesh.defaultSpheres.find(obj => (obj.userData['globalId'] - 1) === id_arrayToConnect);
+
+
+                if (active_matchedObject && hovered_matchedObject){
+                    if ((active_matchedObject as THREE.Mesh).material instanceof THREE.Material) {
+                        ((active_matchedObject as THREE.Mesh).material as THREE.MeshStandardMaterial).color.set('yellow');
+                    }
+
+                    if ((hovered_matchedObject as THREE.Mesh).material instanceof THREE.Material) {
+                        ((hovered_matchedObject as THREE.Mesh).material as THREE.MeshStandardMaterial).color.set('yellow');
+                    }
+
+
+
+
+
+                    const parent = active_matchedObject!.parent as SuperGeometryMesh;
+
+                    let draggablePointIndex = parent.apiData.defaultComplexPoints!.findIndex(
+                        defaultPoint => parent.comparePositions(
+                            {x: defaultPoint.x, y: defaultPoint.y, z: defaultPoint.z},
+                            active_matchedObject!.position
+                        )
+                    );
+
+                    const targetSphereWorldPosition = new THREE.Vector3();
+                    hovered_matchedObject!.getWorldPosition(targetSphereWorldPosition);
+
+                    const localCoordinate = active_matchedObject!.parent!.worldToLocal(targetSphereWorldPosition.clone())
+                    active_matchedObject!.position.copy(localCoordinate);
+
+
+                    parent.apiData.defaultComplexPoints![draggablePointIndex].x = localCoordinate.x;
+                    parent.apiData.defaultComplexPoints![draggablePointIndex].y = localCoordinate.y;
+                    parent.apiData.defaultComplexPoints![draggablePointIndex].z = localCoordinate.z;
+
+                    parent.setNewCalculatedPoints();
+                    parent.updateAverageCoordinates();
+                }
+            }
         }
 
 
-        console.log("Drg" + " " + this.activeObject?.uuid)
-        console.log("Drg" + " " + this.activeObject?.uuid)
-        console.log("Drg" + " " + this.activeObject?.uuid)
-        console.log("Drg" + " " + this.activeObject?.uuid)
 
-
-
-
+/*
         let counter = 0
         this.activeObject!.defaultSpheres.forEach((sphere) => {
 
@@ -356,8 +323,11 @@ export class CanvasComponent implements OnInit {
             console.log("SidesConected")
         }
         console.log("counter: " + counter)
+        */
 
-        //getTheSamePositionAsNeighbor
+
+
+        this.isDragging = false;
     }
 
     resizeListener(){
@@ -436,9 +406,9 @@ export class CanvasComponent implements OnInit {
         this.activeObject = null;
         this.createMesh(divisionConfig, activeMeshPosition, activeMeshDefaultPoints);
     }
-    createMesh(divisionConfig: IDivisionConfig = { x: 1, y: 1, z: 1 },
+    async createMesh(divisionConfig: IDivisionConfig = { x: 1, y: 1, z: 1 },
                oldPosition?: THREE.Vector3,
-               oldDefaultPoints?: IPoint[]): SuperGeometryMesh
+               oldDefaultPoints?: IPoint[]): Promise<SuperGeometryMesh>
     {
         const superGeometryMesh = new SuperGeometryMesh(
             this.apiService,
@@ -447,6 +417,8 @@ export class CanvasComponent implements OnInit {
             divisionConfig,
             oldDefaultPoints
         );
+
+        await firstValueFrom(superGeometryMesh.apiDataLoaded$);
 
         if (oldPosition) superGeometryMesh.position.copy(oldPosition);
         else {
