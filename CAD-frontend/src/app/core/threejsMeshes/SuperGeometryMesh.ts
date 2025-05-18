@@ -405,6 +405,7 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
     private handleDragStart(event: { object: THREE.Object3D } & THREE.Event<"dragstart", DragControls>): void {
 
+
         if (!this.defaultSpheres.includes(event.object)) return;
 
         this.isDragging = true;
@@ -517,8 +518,6 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
     private handleDragEnd(event: { object: THREE.Object3D } & THREE.Event<"dragend", DragControls>): void {
 
-        //console.log("Drag end — index before:", this.draggablePointIndex);
-
         this.isDragging = false;
         this.orbitControls.enabled = true;
         this.outerDragControls.enabled = true;
@@ -530,6 +529,23 @@ export class SuperGeometryMesh extends THREE.Mesh {
 
         this.draggablePointIndex = -1;
         (this as any).draggingSphere = null;
+
+
+
+
+        console.log(event.object.parent?.parent as THREE.Group)
+        const draggedObject = event.object.parent?.parent as THREE.Group
+
+        if (draggedObject.children.length === 1) {
+            let draggedObjectMesh = draggedObject.children[0] as SuperGeometryMesh;
+
+            if (Array.isArray(draggedObjectMesh.material))
+                console.warn('Material is an array. Cannot set opacity on an array of materials.');
+            else {
+                draggedObjectMesh.material.transparent = true;
+                draggedObjectMesh.material.opacity = 1;
+            }
+        }
     }
 
 

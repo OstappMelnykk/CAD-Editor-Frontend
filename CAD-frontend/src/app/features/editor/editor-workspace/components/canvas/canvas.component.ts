@@ -147,12 +147,21 @@ export class CanvasComponent implements OnInit {
         this.isDragging = true
         const draggedObject = event.object as THREE.Group;
 
+
+        console.log("////////////////////////////////")
+        console.log("////////////////////////////////")
+        console.log("////////////////////////////////")
+        console.log(draggedObject)
+        console.log("////////////////////////////////")
+        console.log("////////////////////////////////")
+        console.log("////////////////////////////////")
         if (draggedObject.children.length === 1) {
             let draggedObjectMesh = draggedObject.children[0] as SuperGeometryMesh;
 
             if (Array.isArray(draggedObjectMesh.material))
                 console.warn('Material is an array. Cannot set opacity on an array of materials.');
             else {
+                //if
                 draggedObjectMesh.material.transparent = true;
                 draggedObjectMesh.material.opacity = 0;
             }
@@ -325,6 +334,21 @@ export class CanvasComponent implements OnInit {
         console.log("counter: " + counter)
         */
 
+
+        //const draggedObject = event.object as THREE.Group;
+
+
+
+        if (draggedObject.children.length === 1) {
+            let draggedObjectMesh = draggedObject.children[0] as SuperGeometryMesh;
+
+            if (Array.isArray(draggedObjectMesh.material))
+                console.warn('Material is an array. Cannot set opacity on an array of materials.');
+            else {
+                draggedObjectMesh.material.transparent = true;
+                draggedObjectMesh.material.opacity = 1;
+            }
+        }
 
 
         this.isDragging = false;
