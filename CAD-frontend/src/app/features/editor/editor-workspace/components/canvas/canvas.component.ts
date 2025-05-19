@@ -58,6 +58,16 @@ export class CanvasComponent implements OnInit {
     public isDragging: boolean = false;
     public isHoveredAndDraging: boolean = false;
 
+    public isCKeyPressed = false;
+
+    public isCtrlCPressed = false;
+    public isCtrlVPressed = false;
+
+
+    public copied_divisionConfig: IDivisionConfig | null = null
+    public copied_meshPosition: THREE.Vector3 | null = null
+    public copied_activeMeshDefaultPoints: IPoint[] | null = null
+    public lastMouseEvent: MouseEvent | null = null;
 
 
 
@@ -77,6 +87,65 @@ export class CanvasComponent implements OnInit {
         this.renderer.domElement.addEventListener('click', this.handleCanvasClick.bind(this));
         this.renderer.domElement.addEventListener('mousedown', this.handleCanvasMousedown.bind(this));
         this.renderer.domElement.addEventListener('mousemove', this.handleCanvasMousemove.bind(this));
+
+        window.addEventListener('keydown', (event: KeyboardEvent) => {
+            if (event.key === 'c' || event.key === 'C') {
+                //this.isCKeyPressed = true;
+
+                if (event.ctrlKey) {
+                    this.isCtrlCPressed = true;
+                    console.log('Ctrl + C pressed');
+
+                    if (this.activeObject && this.lastMouseEvent) {
+                        console.log("ok")
+
+                        this.copied_divisionConfig = this.activeObject.divisionConfig
+                        this.copied_activeMeshDefaultPoints = this.activeObject.apiData.defaultComplexPoints!;
+
+                        this.setMouse(this.lastMouseEvent);
+                        this.raycaster.setFromCamera(this.mouse, this.camera);
+                        /*const pickableObjects = this.objectManager.getPickableObjects();
+                        const intersects = this.raycaster.intersectObjects(pickableObjects, false);*/
+
+                        //this.copied_meshPosition =
+
+                        const position = new THREE.Vector3();
+                        this.raycaster.ray.at(10, position);
+                        this.copied_meshPosition = position;
+
+                    }
+                } else {
+                    this.isCKeyPressed = true;
+                    console.log('C pressed');
+                }
+            }
+
+            if (event.key === 'v' || event.key === 'V') {
+                if (event.ctrlKey) {
+                    this.isCtrlVPressed = true;
+                    console.log('Ctrl + V pressed');
+
+                    if (this.copied_divisionConfig === null || this.copied_meshPosition === null || this.copied_activeMeshDefaultPoints === null) {
+                        console.log(this.copied_divisionConfig)
+                        console.log(this.copied_meshPosition)
+                        console.log(this.copied_activeMeshDefaultPoints)
+                        console.error('No copied data');
+                        return;
+                    }
+                    this.createMesh(this.copied_divisionConfig, this.copied_meshPosition, this.copied_activeMeshDefaultPoints);
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (event: KeyboardEvent) => {
+            if (event.key === 'c' || event.key === 'C') {
+                this.isCKeyPressed = false;
+                this.isCtrlCPressed = false;
+            }
+            if (event.key === 'v' || event.key === 'V') {
+                this.isCtrlVPressed = false;
+            }
+        });
 
         this.apiService.DefaultPoints().subscribe({
             next: (defaultPoints) => {
@@ -205,7 +274,7 @@ export class CanvasComponent implements OnInit {
 
 
 
-        if(this.hoveredObject && this.isDragging && this.hoveredObject.uuid !== this.activeObject?.uuid) {
+        if(this.hoveredObject && this.isDragging && this.hoveredObject.uuid !== this.activeObject?.uuid && this.isCKeyPressed) {
             let minDistance = Infinity;
             let closestSideIndex = -1;
 
@@ -335,9 +404,11 @@ export class CanvasComponent implements OnInit {
             setMouse: this.setMouse.bind(this),
             createMesh: this.createMesh.bind(this),
         });
+        this.lastMouseEvent = event;
     }
     private handleCanvasMousedown(event: MouseEvent): void {
         mousedownToChoose.call(this, event, {setMouse: this.setMouse.bind(this),});
+        this.lastMouseEvent = event;
     }
     private handleCanvasMousemove(event: MouseEvent): void {
 
@@ -365,6 +436,7 @@ export class CanvasComponent implements OnInit {
             else
                 this.isHoveredAndDraging = false;
         }
+        this.lastMouseEvent = event;
     }
 
     setMouse(event: MouseEvent): void{
@@ -388,7 +460,6 @@ export class CanvasComponent implements OnInit {
         newParentMesh?: SuperGeometryMesh)
     {
         if (!meshToDivide) {
-            console.log("No active mesh");
             return;
         }
 
@@ -397,9 +468,6 @@ export class CanvasComponent implements OnInit {
         }
 
         visited.add(meshToDivide.uuid);
-
-        console.log("oldMesh: " + meshToDivide.uuid)
-
 
         const oldObject = meshToDivide;
         const activeMeshPosition = new THREE.Vector3();
@@ -413,27 +481,16 @@ export class CanvasComponent implements OnInit {
         this.activeObject = null;
         const newMesh = await this.createMesh(divisionConfig, activeMeshPosition, activeMeshDefaultPoints);
 
-        console.log("newMesh: " + newMesh.uuid)
-
-
-
         if(newParentMesh){
             newParentMesh.neightbours.push(newMesh)
             newMesh.neightbours.push(newParentMesh)
-
-            console.log("add chelderen: " + newParentMesh.uuid + " + " + newMesh.uuid)
         }
-
-
-
 
         if (meshToDivide.neightbours.length === 0) return;
 
-
-        for (const neighbor of oldNeighbours) {
-
+        for (const neighbor of oldNeighbours)
             await this.onDivisionOcures(neighbor, divisionConfig, visited, newMesh);
-        }
+
     }
     async createMesh(divisionConfig: IDivisionConfig = { x: 1, y: 1, z: 1 },
                      oldPosition?: THREE.Vector3,
