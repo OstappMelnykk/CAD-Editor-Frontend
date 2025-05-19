@@ -58,6 +58,9 @@ export class CanvasComponent implements OnInit {
     public isDragging: boolean = false;
     public isHoveredAndDraging: boolean = false;
 
+
+
+
     ngOnInit()
     {
         const canvas = document.getElementById('canvas') as HTMLCanvasElement
@@ -101,7 +104,11 @@ export class CanvasComponent implements OnInit {
         })
 
         this.divisionEvent.divisionEvent$.subscribe((divisionConfig) => {
-            this.onDivisionOcures(divisionConfig);
+            if (this.activeObject === null) {
+                console.log("No active mesh");
+                return;
+            }
+            this.onDivisionOcures(this.activeObject, divisionConfig);
         })
 
         this.colorsEvent.defaultMeshColorEvent$.subscribe((color) => {
@@ -148,13 +155,7 @@ export class CanvasComponent implements OnInit {
         const draggedObject = event.object as THREE.Group;
 
 
-        console.log("////////////////////////////////")
-        console.log("////////////////////////////////")
-        console.log("////////////////////////////////")
-        console.log(draggedObject)
-        console.log("////////////////////////////////")
-        console.log("////////////////////////////////")
-        console.log("////////////////////////////////")
+
         if (draggedObject.children.length === 1) {
             let draggedObjectMesh = draggedObject.children[0] as SuperGeometryMesh;
 
@@ -253,17 +254,6 @@ export class CanvasComponent implements OnInit {
                 console.log("CHANGE DIVISION CONFIG")
             }
 
-            // const activeMesh_defaultSpheres = activeMesh.defaultSpheres
-            //     .map(obj => obj.userData['globalId'] - 1);
-            // const hoveredMesh_defaultSpheres = hoveredMesh.defaultSpheres
-            //     .map(obj => obj.userData['globalId'] - 1)
-            //
-            // console.log(closestSideData.arrayIDs.join(' '))
-            // console.log(hoveredMesh_defaultSpheres.join(' '));
-            // console.log("//////////////////////////////////")
-            //
-            // console.log(closestSideData.oppositeArrayIDs.join(' '))
-            // console.log(activeMesh_defaultSpheres.join(' '));
 
             for (let i = 0; i < closestSideData.arrayIDs.length; i++) {
                 let id_arrayToConnect = closestSideData.arrayIDs[i]
@@ -281,10 +271,6 @@ export class CanvasComponent implements OnInit {
                     if ((hovered_matchedObject as THREE.Mesh).material instanceof THREE.Material) {
                         ((hovered_matchedObject as THREE.Mesh).material as THREE.MeshStandardMaterial).color.set('yellow');
                     }
-
-
-
-
 
                     const parent = active_matchedObject!.parent as SuperGeometryMesh;
 
@@ -310,32 +296,11 @@ export class CanvasComponent implements OnInit {
                     parent.updateAverageCoordinates();
                 }
             }
+
+            hoveredMesh.neightbours.push(activeMesh)
+            activeMesh.neightbours.push(hoveredMesh)
         }
 
-
-
-/*
-        let counter = 0
-        this.activeObject!.defaultSpheres.forEach((sphere) => {
-
-            this.activeObject!.draggablePointIndex =  this.activeObject!.apiData.defaultComplexPoints!.findIndex(
-                defaultPoint => this.activeObject!.comparePositions(
-                    {x: defaultPoint.x, y: defaultPoint.y, z: defaultPoint.z},
-                    sphere.position
-                )
-            );
-
-            counter += this.activeObject!.getTheSamePositionAsNeighbor(sphere)
-
-        })
-        if(counter === 8){
-            console.log("SidesConected")
-        }
-        console.log("counter: " + counter)
-        */
-
-
-        //const draggedObject = event.object as THREE.Group;
 
 
 
@@ -415,24 +380,64 @@ export class CanvasComponent implements OnInit {
         this.orbitControls?.target.set(0, 0, 0);
         this.orbitControls?.update();
     }
-    onDivisionOcures(divisionConfig: IDivisionConfig){
-        if (this.activeObject === null) {
+
+    async onDivisionOcures(
+        meshToDivide: SuperGeometryMesh,
+        divisionConfig: IDivisionConfig,
+        visited: Set<string> = new Set(),
+        newParentMesh?: SuperGeometryMesh)
+    {
+        if (!meshToDivide) {
             console.log("No active mesh");
             return;
         }
-        const oldObject = this.activeObject;
+
+        if (visited.has(meshToDivide.uuid)) {
+            return;
+        }
+
+        visited.add(meshToDivide.uuid);
+
+        console.log("oldMesh: " + meshToDivide.uuid)
+
+
+        const oldObject = meshToDivide;
         const activeMeshPosition = new THREE.Vector3();
         oldObject.getWorldPosition(activeMeshPosition);
         const activeMeshDefaultPoints = oldObject.apiData.defaultComplexPoints!;
 
+        const oldNeighbours = [...oldObject.neightbours];
+
         this.objectManager.removeMesh(oldObject);
         this.updateDragControls();
         this.activeObject = null;
-        this.createMesh(divisionConfig, activeMeshPosition, activeMeshDefaultPoints);
+        const newMesh = await this.createMesh(divisionConfig, activeMeshPosition, activeMeshDefaultPoints);
+
+        console.log("newMesh: " + newMesh.uuid)
+
+
+
+        if(newParentMesh){
+            newParentMesh.neightbours.push(newMesh)
+            newMesh.neightbours.push(newParentMesh)
+
+            console.log("add chelderen: " + newParentMesh.uuid + " + " + newMesh.uuid)
+        }
+
+
+
+
+        if (meshToDivide.neightbours.length === 0) return;
+
+
+        for (const neighbor of oldNeighbours) {
+
+            await this.onDivisionOcures(neighbor, divisionConfig, visited, newMesh);
+        }
     }
     async createMesh(divisionConfig: IDivisionConfig = { x: 1, y: 1, z: 1 },
-               oldPosition?: THREE.Vector3,
-               oldDefaultPoints?: IPoint[]): Promise<SuperGeometryMesh>
+                     oldPosition?: THREE.Vector3,
+                     oldDefaultPoints?: IPoint[]): Promise<SuperGeometryMesh>
     {
         const superGeometryMesh = new SuperGeometryMesh(
             this.apiService,

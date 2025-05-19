@@ -69,6 +69,8 @@ export class SuperGeometryMesh extends THREE.Mesh {
     static groups: Map<string, THREE.Group> = new Map();
     static allGroups:SphereWithNeighbors[][] = []
 
+    public neightbours: SuperGeometryMesh[] = []
+
     public GROUP_DISTANCE = 0.35;
 
     constructor(
