@@ -72,6 +72,8 @@ export class CanvasComponent implements OnInit {
     public lastMouseEvent: MouseEvent | null = null;
     public sKeyDown = false;
 
+    public selectedObjects: SuperGeometryMesh[] = [];
+
 
     ngOnInit()
     {
@@ -92,11 +94,71 @@ export class CanvasComponent implements OnInit {
         this.renderer.domElement.addEventListener('mousedown', this.handleCanvasMousedown.bind(this));
         this.renderer.domElement.addEventListener('mousemove', this.handleCanvasMousemove.bind(this));
         this.renderer.domElement.addEventListener('mouseup', (event) => {
-            this.orbitControls.enabled = true;
-            this.selection_isDragging = false;
-            this.selection_box.style.display = 'none';
+
+
+            if (this.selection_isDragging){
+                this.orbitControls.enabled = true;
+                this.selection_box.style.display = 'none';
+
+
+                this.selection_endX = event.clientX;
+                this.selection_endY = event.clientY;
+
+
+                console.log('Початкові координати прямокутника: ', this.selection_startX, this.selection_startY);
+                console.log('Кінцеві координати прямокутника: ', this.selection_endX, this.selection_endY);
+
+
+
+                const grid = this.generateGridPoints(this.selection_startX, this.selection_endX, this.selection_startY, this.selection_endY);
+
+
+                this.printGrid(grid);
+
+
+                for (let i = 0; i < grid.length; i++) {
+                    for (let j = 0; j < grid[i].length; j++) {
+                        const point = grid[i][j];
+                        let event = new MouseEvent('mouseup', {
+                            bubbles: true,
+                            cancelable: true,
+                            clientX: point.x,
+                            clientY: point.y,
+                        });
+
+                        this.setMouse(event);
+                        this.raycaster.setFromCamera(this.mouse, this.camera);
+                        const pickableObjects = this.objectManager.getPickableObjects();
+
+                        const intersects = this.raycaster.intersectObjects(pickableObjects, false);
+
+                        if (intersects.length > 0 &&
+                            intersects[0].object instanceof SuperGeometryMesh)
+                        {
+                            this.selectedObjects.push(intersects[0].object as SuperGeometryMesh);
+                            const mesh = intersects[0].object as SuperGeometryMesh;
+                            mesh.updatePolygonColors(new THREE.Color('rgb(7,243,201)'));
+
+                        }
+                    }
+                }
+
+
+
+
+
+
+
+
+                this.selection_isDragging = false;
+            }
+
+
+
 
         });
+
+
 
         window.addEventListener('keydown', (event: KeyboardEvent) => {
             if (event.key === 'c' || event.key === 'C') {
@@ -175,6 +237,51 @@ export class CanvasComponent implements OnInit {
 
         this.arrowHelper.setLength(3)
     }
+
+
+    private generateGridPoints(xs: number, xe: number, ys: number, ye: number) {
+        const pointsMatrix = [];
+
+        const stepX = xe >= xs ? 10 : -10;
+        const stepY = ye >= ys ? 10 : -10;
+
+        for (let y = ys; (stepY > 0) ? y <= ye : y >= ye; y += stepY) {
+            const row = [];
+            for (let x = xs; (stepX > 0) ? x <= xe : x >= xe; x += stepX)
+                row.push({ x: x, y: y });
+            pointsMatrix.push(row);
+        }
+        return pointsMatrix;
+    }
+
+    private printGrid(grid:  { x: number, y: number }[][]) {
+        for (let i = 0; i < grid.length; i++) {
+            let rowStr = '';
+            for (let j = 0; j < grid[i].length; j++) {
+                const point = grid[i][j];
+                rowStr += `(${point.x},${point.y})\t`;
+            }
+            console.log(rowStr);
+        }
+    }
+
+
+    /*private highlightObjectsInSelectionBox(): void {
+
+    }
+
+    private setColorToSuperGeometryMesh(mesh: SuperGeometryMesh): void {
+        const newColor = new THREE.Color(Math.random(), Math.random(), Math.random()); // або будь-який
+        if (Array.isArray(mesh.material)) return;
+
+        console.log(mesh.uuid)
+
+        mesh.updatePolygonColors(newColor);
+        mesh.material.needsUpdate = true;
+    }*/
+
+
+
 
     subscriptionHandler(){
         this.cameraEventService.cameraEvent$.subscribe((cameraPosition: ICameraPosition) => {
@@ -418,6 +525,8 @@ export class CanvasComponent implements OnInit {
 
     private selection_startX: number = 0;
     private selection_startY: number = 0;
+    private selection_endX: number = 0;
+    private selection_endY: number = 0;
     public selection_isDragging: boolean = false;
 
 
@@ -449,6 +558,8 @@ export class CanvasComponent implements OnInit {
         if (event.button === 0 && this.sKeyDown) {
             if (!this.selection_isDragging) return;
 
+            const rect = this.renderer.domElement.getBoundingClientRect();
+
             const currentX = event.clientX;
             const currentY = event.clientY;
 
@@ -461,6 +572,8 @@ export class CanvasComponent implements OnInit {
             this.selection_box.style.top = `${y}px`;
             this.selection_box.style.width = `${width}px`;
             this.selection_box.style.height = `${height}px`;
+
+
         }
         else{
             const result = meshHover.call(this, event, { setMouse: this.setMouse.bind(this) })

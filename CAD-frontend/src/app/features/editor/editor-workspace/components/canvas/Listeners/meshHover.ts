@@ -29,7 +29,9 @@ export function meshHover(this: CanvasComponent,
 
     if (intersects.length > 0 &&
         intersects[0].object instanceof SuperGeometryMesh &&
-        intersects[0].object !== this.activeObject)
+        intersects[0].object !== this.activeObject &&
+        !this.selectedObjects.some(obj => obj.uuid === (intersects[0].object as SuperGeometryMesh).uuid)
+    )
     {
         const mesh = intersects[0].object as SuperGeometryMesh;
         mesh.updatePolygonColors(mesh.meshColors.hoverMeshColor);

@@ -21,6 +21,14 @@ export function mousedownToChoose(this: CanvasComponent,
         if (activeMesh) {
             activeMesh.updatePolygonColors(activeMesh.meshColors.defaultMeshColor);
             this.activeObject = null;
+
+        }
+
+        if(this.selectedObjects.length > 0){
+            this.selectedObjects.forEach(
+                object => object.updatePolygonColors(object.meshColors.defaultMeshColor)
+            )
+            this.selectedObjects = [];
         }
         return;
     }
@@ -38,6 +46,10 @@ export function mousedownToChoose(this: CanvasComponent,
         else {
             clickedMesh.updatePolygonColors(clickedMesh.meshColors.activeMeshColor);
             this.activeObject = clickedMesh;
+            this.selectedObjects.forEach(
+                object => object.updatePolygonColors(object.meshColors.defaultMeshColor)
+            )
+            this.selectedObjects = [];
         }
     }
 }
