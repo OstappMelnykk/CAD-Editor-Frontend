@@ -43,6 +43,8 @@ export class CanvasComponent implements OnInit {
     public orbitControls!: OrbitControls;
     public dragControls!: DragControls;
 
+    public selection_box!: HTMLDivElement;
+
     public raycaster = new THREE.Raycaster();
     public mouse = new THREE.Vector2();
 
@@ -68,7 +70,7 @@ export class CanvasComponent implements OnInit {
     public copied_meshPosition: THREE.Vector3 | null = null
     public copied_activeMeshDefaultPoints: IPoint[] | null = null
     public lastMouseEvent: MouseEvent | null = null;
-
+    public sKeyDown = false;
 
 
     ngOnInit()
@@ -79,6 +81,8 @@ export class CanvasComponent implements OnInit {
             return;
         }
 
+        this.selection_box = document.getElementById('selection-box') as HTMLDivElement;
+
         this.initService.init(canvas);
         this.resizeListener()
         this.subscriptionHandler()
@@ -87,11 +91,15 @@ export class CanvasComponent implements OnInit {
         this.renderer.domElement.addEventListener('click', this.handleCanvasClick.bind(this));
         this.renderer.domElement.addEventListener('mousedown', this.handleCanvasMousedown.bind(this));
         this.renderer.domElement.addEventListener('mousemove', this.handleCanvasMousemove.bind(this));
+        this.renderer.domElement.addEventListener('mouseup', (event) => {
+            this.orbitControls.enabled = true;
+            this.selection_isDragging = false;
+            this.selection_box.style.display = 'none';
+
+        });
 
         window.addEventListener('keydown', (event: KeyboardEvent) => {
             if (event.key === 'c' || event.key === 'C') {
-                //this.isCKeyPressed = true;
-
                 if (event.ctrlKey) {
                     this.isCtrlCPressed = true;
                     console.log('Ctrl + C pressed');
@@ -104,23 +112,17 @@ export class CanvasComponent implements OnInit {
 
                         this.setMouse(this.lastMouseEvent);
                         this.raycaster.setFromCamera(this.mouse, this.camera);
-                        /*const pickableObjects = this.objectManager.getPickableObjects();
-                        const intersects = this.raycaster.intersectObjects(pickableObjects, false);*/
-
-                        //this.copied_meshPosition =
 
                         const position = new THREE.Vector3();
                         this.raycaster.ray.at(10, position);
                         this.copied_meshPosition = position;
-
                     }
                 } else {
                     this.isCKeyPressed = true;
                     console.log('C pressed');
                 }
             }
-
-            if (event.key === 'v' || event.key === 'V') {
+            else if (event.key === 'v' || event.key === 'V') {
                 if (event.ctrlKey) {
                     this.isCtrlVPressed = true;
                     console.log('Ctrl + V pressed');
@@ -135,6 +137,10 @@ export class CanvasComponent implements OnInit {
                     this.createMesh(this.copied_divisionConfig, this.copied_meshPosition, this.copied_activeMeshDefaultPoints);
                 }
             }
+            else if (event.key === 's' || event.key === 'S') {
+                this.sKeyDown = true;
+                console.log('S pressed');
+            }
         });
 
         window.addEventListener('keyup', (event: KeyboardEvent) => {
@@ -142,8 +148,11 @@ export class CanvasComponent implements OnInit {
                 this.isCKeyPressed = false;
                 this.isCtrlCPressed = false;
             }
-            if (event.key === 'v' || event.key === 'V') {
+            else if (event.key === 'v' || event.key === 'V') {
                 this.isCtrlVPressed = false;
+            }
+            else if (event.key === 's' || event.key === 'S') {
+                this.sKeyDown = false;
             }
         });
 
@@ -406,36 +415,80 @@ export class CanvasComponent implements OnInit {
         });
         this.lastMouseEvent = event;
     }
+
+    private selection_startX: number = 0;
+    private selection_startY: number = 0;
+    public selection_isDragging: boolean = false;
+
+
+
     private handleCanvasMousedown(event: MouseEvent): void {
-        mousedownToChoose.call(this, event, {setMouse: this.setMouse.bind(this),});
+
+        if (event.button === 0 && this.sKeyDown) {
+            console.log('Виділення з клавішею S');
+            this.orbitControls.enabled = false;
+
+            this.selection_isDragging = true;
+            this.selection_startX = event.clientX;
+            this.selection_startY = event.clientY;
+
+            this.selection_box.style.left = `${event.clientX}px`;
+            this.selection_box.style.top = `${event.clientY}px`;
+            this.selection_box.style.width = '0px';
+            this.selection_box.style.height = '0px';
+            this.selection_box.style.display = 'block';
+        }
+        else{
+            mousedownToChoose.call(this, event, {setMouse: this.setMouse.bind(this),});
+        }
+
         this.lastMouseEvent = event;
     }
     private handleCanvasMousemove(event: MouseEvent): void {
 
-        const result = meshHover.call(this, event, { setMouse: this.setMouse.bind(this) })
-        if (!result) {
-            this.scene.remove(this.arrowHelper);
-            this.scene.remove(this.PointVisualisation);
-            return;
+        if (event.button === 0 && this.sKeyDown) {
+            if (!this.selection_isDragging) return;
+
+            const currentX = event.clientX;
+            const currentY = event.clientY;
+
+            const x = Math.min(currentX, this.selection_startX);
+            const y = Math.min(currentY, this.selection_startY);
+            const width = Math.abs(currentX - this.selection_startX);
+            const height = Math.abs(currentY - this.selection_startY);
+
+            this.selection_box.style.left = `${x}px`;
+            this.selection_box.style.top = `${y}px`;
+            this.selection_box.style.width = `${width}px`;
+            this.selection_box.style.height = `${height}px`;
         }
         else{
-            this.hoveredPoint = result!.intersectedPoint;
-            const directionVector = result!.directionVector
-            this.arrowHelper.position.copy(this.hoveredPoint);
-            this.scene.add(this.arrowHelper);
-            this.arrowHelper.setDirection(directionVector);
-            this.PointVisualisation.position.copy(this.hoveredPoint);
-            this.scene.add(this.PointVisualisation);
+            const result = meshHover.call(this, event, { setMouse: this.setMouse.bind(this) })
+            if (!result) {
+                this.scene.remove(this.arrowHelper);
+                this.scene.remove(this.PointVisualisation);
+                return;
+            }
+            else{
+                this.hoveredPoint = result!.intersectedPoint;
+                const directionVector = result!.directionVector
+                this.arrowHelper.position.copy(this.hoveredPoint);
+                this.scene.add(this.arrowHelper);
+                this.arrowHelper.setDirection(directionVector);
+                this.PointVisualisation.position.copy(this.hoveredPoint);
+                this.scene.add(this.PointVisualisation);
 
-            if (this.isDragging) {
-                if (this.hoveredObject)
-                    this.isHoveredAndDraging = true;
+                if (this.isDragging) {
+                    if (this.hoveredObject)
+                        this.isHoveredAndDraging = true;
+                    else
+                        this.isHoveredAndDraging = false;
+                }
                 else
                     this.isHoveredAndDraging = false;
             }
-            else
-                this.isHoveredAndDraging = false;
         }
+
         this.lastMouseEvent = event;
     }
 
